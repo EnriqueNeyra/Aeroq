@@ -92,6 +92,13 @@ void setup() {
 
     Serial.println("Setup complete.\n");
     delay(5000);
+
+    // Clear the display again to ensure no old text remains
+    display.setFullWindow();
+    display.firstPage();
+    do {
+        display.fillScreen(GxEPD_WHITE);
+    } while (display.nextPage());
 }
 
 void loop() {
