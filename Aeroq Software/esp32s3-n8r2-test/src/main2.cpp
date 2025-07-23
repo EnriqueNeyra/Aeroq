@@ -1,347 +1,239 @@
 // #include <Arduino.h>
-// #include <SensirionI2cScd4x.h>
 // #include <Wire.h>
+// #include <SPI.h>
+// #include <SensirionI2CSen5x.h>
+// #include <SensirionI2cScd4x.h>
+// #include <GxEPD2_BW.h>
+// #include <Fonts/FreeSansBold12pt7b.h>
+// #include <Fonts/FreeSansBold18pt7b.h>
+// #include <Fonts/FreeSansBold24pt7b.h>
 
-// // macro definitions
-// // make sure that we use the proper definition of NO_ERROR
-// #ifdef NO_ERROR
-// #undef NO_ERROR
-// #endif
-// #define NO_ERROR 0
+// // ==== SPI + Display Pin Configuration ====
+// #define EPD_MOSI  11
+// #define EPD_SCK   12
+// #define EPD_CS    5
+// #define EPD_DC    17
+// #define EPD_RST   16
+// #define EPD_BUSY  4
 
-// SensirionI2cScd4x sensor;
+// // ==== GDEY037T03 e-paper display (416x240) ====
+// GxEPD2_BW<GxEPD2_370_GDEY037T03, GxEPD2_370_GDEY037T03::HEIGHT> display(
+//     GxEPD2_370_GDEY037T03(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
 
-// static char errorMessage[64];
+// // ==== Sensor Instances ====
+// SensirionI2CSen5x sen5x;
+// SensirionI2cScd4x scd41;
+
+// static char errorMessage[256];
 // static int16_t error;
 
-// void PrintUint64(uint64_t& value) {
-//     Serial.print("0x");
-//     Serial.print((uint32_t)(value >> 32), HEX);
-//     Serial.print((uint32_t)(value & 0xFFFFFFFF), HEX);
-// }
+// #define NO_ERROR 0
 
 // void setup() {
-
+//     delay(1000);  // Delay to allow USB CDC setup
 //     Serial.begin(115200);
-//     while (!Serial) {
-//         delay(100);
-//     }
-//     Wire.begin(SDA, SCL);
-//     sensor.begin(Wire, SCD41_I2C_ADDR_62);
+//     while (!Serial) delay(10);
+//     Serial.println("===== Booting ESP32-S3 Air Quality Monitor =====");
 
-//     uint64_t serialNumber = 0;
+//     Wire.begin(SDA, SCL);
+//     Serial.println("Wire (I2C) initialized");
+
+//     // SPI pin remap
+//     SPI.begin(EPD_SCK, -1, EPD_MOSI);
+//     Serial.println("SPI initialized");
+
+//     // Init e-paper display
+//     Serial.println("Initializing display...");
+//     display.init(115200);
+//     display.setRotation(1);
+//     display.setFont(&FreeSansBold18pt7b);
+//     display.setTextColor(GxEPD_BLACK);
+//     display.setFullWindow();
+//     display.firstPage();
+//     do {
+//         display.setCursor(120, 120);
+//         display.println("Initializing...");
+//     } while (display.nextPage());
+
+//     // Init SCD41
+//     Serial.println("Initializing SCD41...");
+//     scd41.begin(Wire, SCD41_I2C_ADDR_62);
 //     delay(30);
-//     // Ensure sensor is in clean state
-//     error = sensor.wakeUp();
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute wakeUp(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//     }
-//     error = sensor.stopPeriodicMeasurement();
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute stopPeriodicMeasurement(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//     }
-//     error = sensor.reinit();
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute reinit(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//     }
-//     // Read out information about the sensor
-//     error = sensor.getSerialNumber(serialNumber);
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute getSerialNumber(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//         return;
-//     }
-//     Serial.print("serial number: ");
-//     PrintUint64(serialNumber);
-//     Serial.println();
-//     //
-//     // If temperature offset and/or sensor altitude compensation
-//     // is required, you should call the respective functions here.
-//     // Check out the header file for the function definitions.
-//     // Start periodic measurements (5sec interval)
-//     error = sensor.startPeriodicMeasurement();
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute startPeriodicMeasurement(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//         return;
-//     }
-//     //
-//     // If low-power mode is required, switch to the low power
-//     // measurement function instead of the standard measurement
-//     // function above. Check out the header file for the definition.
-//     // For SCD41, you can also check out the single shot measurement example.
-//     //
-// }
+//     error = scd41.wakeUp();
+//     Serial.printf("SCD41 wakeUp() -> %d\n", error);
+//     error = scd41.stopPeriodicMeasurement();
+//     Serial.printf("SCD41 stopPeriodicMeasurement() -> %d\n", error);
+//     error = scd41.reinit();
+//     Serial.printf("SCD41 reinit() -> %d\n", error);
+//     error = scd41.startPeriodicMeasurement();
+//     Serial.printf("SCD41 startPeriodicMeasurement() -> %d\n", error);
 
-// void loop() {
-
-//     bool dataReady = false;
-//     uint16_t co2Concentration = 0;
-//     float temperature = 0.0;
-//     float relativeHumidity = 0.0;
-//     //
-//     // Slow down the sampling to 0.2Hz.
-//     //
-//     delay(5000);
-//     error = sensor.getDataReadyStatus(dataReady);
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute getDataReadyStatus(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//         return;
-//     }
-//     while (!dataReady) {
-//         delay(100);
-//         error = sensor.getDataReadyStatus(dataReady);
-//         if (error != NO_ERROR) {
-//             Serial.print("Error trying to execute getDataReadyStatus(): ");
-//             errorToString(error, errorMessage, sizeof errorMessage);
-//             Serial.println(errorMessage);
-//             return;
-//         }
-//     }
-//     //
-//     // If ambient pressure compenstation during measurement
-//     // is required, you should call the respective functions here.
-//     // Check out the header file for the function definition.
-//     error =
-//         sensor.readMeasurement(co2Concentration, temperature, relativeHumidity);
-//     if (error != NO_ERROR) {
-//         Serial.print("Error trying to execute readMeasurement(): ");
-//         errorToString(error, errorMessage, sizeof errorMessage);
-//         Serial.println(errorMessage);
-//         return;
-//     }
-//     //
-//     // Print results in physical units.
-//     Serial.print("CO2 concentration [ppm]: ");
-//     Serial.print(co2Concentration);
-//     Serial.println();
-//     Serial.print("Temperature [°C]: ");
-//     Serial.print(temperature);
-//     Serial.println();
-//     Serial.print("Relative Humidity [RH]: ");
-//     Serial.print(relativeHumidity);
-//     Serial.println();
-// }
-
-// #include <Arduino.h>
-// #include <SensirionI2CSen5x.h>
-// #include <Wire.h>
-
-// // The used commands use up to 48 bytes. On some Arduino's the default buffer
-// // space is not large enough
-// #define MAXBUF_REQUIREMENT 48
-
-// #if (defined(I2C_BUFFER_LENGTH) &&                 \
-//      (I2C_BUFFER_LENGTH >= MAXBUF_REQUIREMENT)) || \
-//     (defined(BUFFER_LENGTH) && BUFFER_LENGTH >= MAXBUF_REQUIREMENT)
-// #define USE_PRODUCT_INFO
-// #endif
-
-// SensirionI2CSen5x sen5x;
-
-// void printModuleVersions() {
-//     uint16_t error;
-//     char errorMessage[256];
-
-//     unsigned char productName[32];
-//     uint8_t productNameSize = 32;
-
-//     error = sen5x.getProductName(productName, productNameSize);
-
-//     if (error) {
-//         Serial.print("Error trying to execute getProductName(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     } else {
-//         Serial.print("ProductName:");
-//         Serial.println((char*)productName);
-//     }
-
-//     uint8_t firmwareMajor;
-//     uint8_t firmwareMinor;
-//     bool firmwareDebug;
-//     uint8_t hardwareMajor;
-//     uint8_t hardwareMinor;
-//     uint8_t protocolMajor;
-//     uint8_t protocolMinor;
-
-//     error = sen5x.getVersion(firmwareMajor, firmwareMinor, firmwareDebug,
-//                              hardwareMajor, hardwareMinor, protocolMajor,
-//                              protocolMinor);
-//     if (error) {
-//         Serial.print("Error trying to execute getVersion(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     } else {
-//         Serial.print("Firmware: ");
-//         Serial.print(firmwareMajor);
-//         Serial.print(".");
-//         Serial.print(firmwareMinor);
-//         Serial.print(", ");
-
-//         Serial.print("Hardware: ");
-//         Serial.print(hardwareMajor);
-//         Serial.print(".");
-//         Serial.println(hardwareMinor);
-//     }
-// }
-
-// void printSerialNumber() {
-//     uint16_t error;
-//     char errorMessage[256];
-//     unsigned char serialNumber[32];
-//     uint8_t serialNumberSize = 32;
-
-//     error = sen5x.getSerialNumber(serialNumber, serialNumberSize);
-//     if (error) {
-//         Serial.print("Error trying to execute getSerialNumber(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     } else {
-//         Serial.print("SerialNumber:");
-//         Serial.println((char*)serialNumber);
-//     }
-// }
-
-// void setup() {
-
-//     Serial.begin(115200);
-//     while (!Serial) {
-//         delay(100);
-//     }
-
-//     Wire.begin(SDA, SCL);
-
+//     // Init SEN54
+//     Serial.println("Initializing SEN54...");
 //     sen5x.begin(Wire);
-
-//     uint16_t error;
-//     char errorMessage[256];
 //     error = sen5x.deviceReset();
-//     if (error) {
-//         Serial.print("Error trying to execute deviceReset(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     }
-
-// // Print SEN55 module information if i2c buffers are large enough
-// #ifdef USE_PRODUCT_INFO
-//     printSerialNumber();
-//     printModuleVersions();
-// #endif
-
-//     // set a temperature offset in degrees celsius
-//     // Note: supported by SEN54 and SEN55 sensors
-//     // By default, the temperature and humidity outputs from the sensor
-//     // are compensated for the modules self-heating. If the module is
-//     // designed into a device, the temperature compensation might need
-//     // to be adapted to incorporate the change in thermal coupling and
-//     // self-heating of other device components.
-//     //
-//     // A guide to achieve optimal performance, including references
-//     // to mechanical design-in examples can be found in the app note
-//     // “SEN5x – Temperature Compensation Instruction” at www.sensirion.com.
-//     // Please refer to those application notes for further information
-//     // on the advanced compensation settings used
-//     // in `setTemperatureOffsetParameters`, `setWarmStartParameter` and
-//     // `setRhtAccelerationMode`.
-//     //
-//     // Adjust tempOffset to account for additional temperature offsets
-//     // exceeding the SEN module's self heating.
-//     float tempOffset = 0.0;
-//     error = sen5x.setTemperatureOffsetSimple(tempOffset);
-//     if (error) {
-//         Serial.print("Error trying to execute setTemperatureOffsetSimple(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     } else {
-//         Serial.print("Temperature Offset set to ");
-//         Serial.print(tempOffset);
-//         Serial.println(" deg. Celsius (SEN54/SEN55 only");
-//     }
-
-//     // Start Measurement
+//     Serial.printf("SEN54 deviceReset() -> %d\n", error);
+//     error = sen5x.setTemperatureOffsetSimple(0.0);
+//     Serial.printf("SEN54 setTemperatureOffsetSimple() -> %d\n", error);
 //     error = sen5x.startMeasurement();
-//     if (error) {
-//         Serial.print("Error trying to execute startMeasurement(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     }
+//     Serial.printf("SEN54 startMeasurement() -> %d\n", error);
+
+//     Serial.println("Setup complete.\n");
+//     delay(5000);
 // }
 
 // void loop() {
-//     uint16_t error;
-//     char errorMessage[256];
+//     delay(5000); // 5s update cycle
+//     Serial.println("========== SENSOR UPDATE ==========");
 
-//     delay(1000);
-
-//     // Read Measurement
-//     float massConcentrationPm1p0;
-//     float massConcentrationPm2p5;
-//     float massConcentrationPm4p0;
-//     float massConcentrationPm10p0;
-//     float ambientHumidity;
-//     float ambientTemperature;
-//     float vocIndex;
-//     float noxIndex;
-
-//     error = sen5x.readMeasuredValues(
-//         massConcentrationPm1p0, massConcentrationPm2p5, massConcentrationPm4p0,
-//         massConcentrationPm10p0, ambientHumidity, ambientTemperature, vocIndex,
-//         noxIndex);
-
-//     if (error) {
-//         Serial.print("Error trying to execute readMeasuredValues(): ");
-//         errorToString(error, errorMessage, 256);
-//         Serial.println(errorMessage);
-//     } else {
-//         Serial.print("MassConcentrationPm1p0:");
-//         Serial.print(massConcentrationPm1p0);
-//         Serial.print("\t");
-//         Serial.print("MassConcentrationPm2p5:");
-//         Serial.print(massConcentrationPm2p5);
-//         Serial.print("\t");
-//         Serial.print("MassConcentrationPm4p0:");
-//         Serial.print(massConcentrationPm4p0);
-//         Serial.print("\t");
-//         Serial.print("MassConcentrationPm10p0:");
-//         Serial.print(massConcentrationPm10p0);
-//         Serial.print("\t");
-//         Serial.print("AmbientHumidity:");
-//         if (isnan(ambientHumidity)) {
-//             Serial.print("n/a");
-//         } else {
-//             Serial.print(ambientHumidity);
-//         }
-//         Serial.print("\t");
-//         Serial.print("AmbientTemperature:");
-//         if (isnan(ambientTemperature)) {
-//             Serial.print("n/a");
-//         } else {
-//             Serial.print(ambientTemperature);
-//         }
-//         Serial.print("\t");
-//         Serial.print("VocIndex:");
-//         if (isnan(vocIndex)) {
-//             Serial.print("n/a");
-//         } else {
-//             Serial.print(vocIndex);
-//         }
-//         Serial.print("\t");
-//         Serial.print("NoxIndex:");
-//         if (isnan(noxIndex)) {
-//             Serial.println("n/a");
-//         } else {
-//             Serial.println(noxIndex);
-//         }
+//     // ==== Read SCD41 ====
+//     Serial.println("[SCD41] Reading data...");
+//     bool dataReady = false;
+//     error = scd41.getDataReadyStatus(dataReady);
+//     if (error != NO_ERROR || !dataReady) {
+//         Serial.printf("[SCD41] getDataReadyStatus() error = %d\n", error);
+//         return;
 //     }
+
+//     uint16_t co2 = 0;
+//     float scdTemp = 0.0, scdRH = 0.0;
+//     error = scd41.readMeasurement(co2, scdTemp, scdRH);
+//     if (error != NO_ERROR) {
+//         Serial.printf("[SCD41] readMeasurement() error = %d\n", error);
+//         return;
+//     }
+
+//     Serial.printf("[SCD41] CO2: %d ppm\n", co2);
+//     Serial.printf("[SCD41] Temp: %.2f °C\n", scdTemp);
+//     Serial.printf("[SCD41] RH: %.2f %%\n", scdRH);
+
+//     // ==== Read SEN54 ====
+//     Serial.println("\n[SEN54] Reading data...");
+//     float pm1, pm2_5, pm4, pm10, senRH, senTemp, voc, nox;
+//     error = sen5x.readMeasuredValues(pm1, pm2_5, pm4, pm10, senRH, senTemp, voc, nox);
+//     if (error != NO_ERROR) {
+//         Serial.printf("[SEN54] readMeasuredValues() error = %d\n", error);
+//         return;
+//     }
+
+//     Serial.printf("[SEN54] Temp: %.2f °C, RH: %.2f %%\n", senTemp, senRH);
+//     Serial.printf("[SEN54] PM1.0: %.2f, PM2.5: %.2f, PM4.0: %.2f, PM10: %.2f ug/m3\n", pm1, pm2_5, pm4, pm10);
+//     Serial.printf("[SEN54] VOC Index: %.2f, NOx Index: %.2f\n", voc, nox);
+
+//     // ==== Averaged Values ====
+//     float avgTemp = (senTemp + scdTemp) / 2.0;
+//     float avgRH = (senRH + scdRH) / 2.0;
+
+//     // ==== Update Display ====
+//     Serial.println("\n[Display] Updating e-paper...");
+//     display.setPartialWindow(0, 0, display.width(), display.height());
+//     display.firstPage();
+//     do {
+//         display.fillScreen(GxEPD_WHITE);
+        
+//         // First horizontal line
+//         display.drawLine(0, 102, 416, 102, GxEPD_BLACK);
+//         display.drawLine(0, 103, 416, 103, GxEPD_BLACK);
+
+//         // Vertical lines for Temp, RH, CO2, VOC
+//         display.drawLine(138, 0, 138, 102, GxEPD_BLACK);
+//         display.drawLine(139, 0, 139, 102, GxEPD_BLACK);
+
+//         display.drawLine(277, 0, 277, 102, GxEPD_BLACK);
+//         display.drawLine(278, 0, 278, 102, GxEPD_BLACK);
+
+//         // Horizontal lines for PM1.0, PM2.5, PM4.0, PM10
+//         display.drawLine(36, 148, 190, 148, GxEPD_BLACK);
+//         display.drawLine(226, 148, 380, 148, GxEPD_BLACK);
+//         display.drawLine(36, 194, 190, 194, GxEPD_BLACK);
+//         display.drawLine(226, 194, 380, 194, GxEPD_BLACK);
+
+//         // Bottom horizontal line
+//         display.drawLine(0, 215, 416, 215, GxEPD_BLACK);
+//         display.drawLine(0, 216, 416, 216, GxEPD_BLACK);
+        
+//         display.setTextColor(GxEPD_BLACK);
+
+//         // Temperature and Humidity Display
+//         display.setFont(&FreeSansBold18pt7b);
+//         display.setCursor(20, 40);
+//         display.printf("%.1f C", avgTemp);
+
+//         display.setCursor(20, 90);
+//         display.printf("%.1f%%", avgRH);
+
+//         //Co2 and VOC Display
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(147, 25);
+//         display.printf("CO2 (ppm)");
+//         display.setFont(&FreeSansBold24pt7b);
+//         display.setCursor(165, 80);
+//         display.printf("%d", co2);
+        
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(285, 25);
+//         display.printf("VOC Index");
+//         display.setFont(&FreeSansBold24pt7b);
+//         display.setCursor(310, 80);
+//         display.printf("%.0f", voc);
+
+//         // Particulate Matter Display
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(36, 146);
+//         display.printf("PM1:", pm1);
+//         display.setFont(&FreeSansBold18pt7b);
+//         display.setCursor(105, 146);
+//         display.printf("%.1f", pm1);
+
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(226, 146);
+//         display.printf("PM2.5:", pm2_5);
+//         display.setFont(&FreeSansBold18pt7b);
+//         display.setCursor(310, 146);
+//         display.printf("%.1f", pm2_5);
+
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(36, 192);
+//         display.printf("PM4:", pm4);
+//         display.setFont(&FreeSansBold18pt7b);
+//         display.setCursor(105, 192);
+//         display.printf("%.1f", pm4);
+
+//         display.setFont(&FreeSansBold12pt7b);
+//         display.setCursor(226, 192);
+//         display.printf("PM10:", pm10);
+//         display.setFont(&FreeSansBold18pt7b);
+//         display.setCursor(310, 192);
+//         display.printf("%.1f", pm10);
+
+//         //drawAirQualityIndicator(co2, voc, pm1, pm2_5, pm4, pm10);
+
+//     } while (display.nextPage());
+
+//     Serial.println("[Display] Refresh complete.\n");
 // }
+
+// // void drawAirQualityIndicator(uint16_t co2, float voc, float pm1, float pm2_5, float pm4, float pm10) {
+// //     bool isPoor = co2 > 1400 || voc > 250 || pm2_5 > 35 || pm10 > 50;
+// //     bool isModerate = co2 > 800 || voc > 120 || pm2_5 > 12 || pm10 > 20;
+
+// //     int16_t baseY = display.height() - 5;
+// //     int16_t triHeight = 10;
+// //     int16_t triWidth = 12;
+// //     int16_t halfWidth = triWidth / 2;
+
+// //     int16_t x;
+// //     if (isPoor) {
+// //         x = display.width() - 30;
+// //     } else if (isModerate) {
+// //         x = display.width() / 2;
+// //     } else {
+// //         x = 30;
+// //     }
+
+// //     display.fillTriangle(
+// //         x, baseY - triHeight,
+// //         x - halfWidth, baseY,
+// //         x + halfWidth, baseY,
+// //         GxEPD_BLACK);
+// // }
