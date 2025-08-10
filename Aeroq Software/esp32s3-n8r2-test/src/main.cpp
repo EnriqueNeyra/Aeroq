@@ -35,7 +35,10 @@ static int16_t error;
 void setup() {
     delay(1000);  // Delay to allow USB CDC setup
     Serial.begin(115200);
-    while (!Serial) delay(10);
+    unsigned long start = millis();
+    while (!Serial && millis() - start < 1000) {
+        delay(10);
+    }
     Serial.println("===== Booting ESP32-S3 Air Quality Monitor =====");
 
     Wire.begin(SDA, SCL);

@@ -76,10 +76,6 @@
           "modifications do not affect functionality"
         ],
         [
-          "lib_footprint_mismatch|90901000|94250000|0156744d-1df4-4047-a3ad-87fd97afbd9f|00000000-0000-0000-0000-000000000000",
-          "visual solkscreen modification only"
-        ],
-        [
           "starved_thermal|100200000|111500000|14974319-d9ed-43b2-832b-3546f67c39b3|cedd7eea-bc2e-47e5-b5b7-7de2a804a12a|F.Cu",
           "can't get more than 1 spoke here"
         ],
