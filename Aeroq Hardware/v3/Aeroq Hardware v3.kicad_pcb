@@ -15153,7 +15153,7 @@
 			(net 25 "unconnected-(U1-EH-Pad0)")
 			(pinfunction "EH")
 			(pintype "unspecified")
-			(uuid "2bbda3e5-c09f-419d-a576-e04833b2128e")
+			(uuid "9e778eba-0fe3-4858-a89d-8c700c55ce58")
 		)
 		(pad "0" thru_hole oval
 			(at 2.4 -2.15 270)
@@ -15164,7 +15164,7 @@
 			(net 25 "unconnected-(U1-EH-Pad0)")
 			(pinfunction "EH")
 			(pintype "unspecified")
-			(uuid "2bbda3e5-c09f-419d-a576-e04833b2128e")
+			(uuid "2aa1d70d-7937-4081-827d-359b83383f6f")
 		)
 		(pad "0" thru_hole oval
 			(at 2.4 2.15 270)
@@ -15175,7 +15175,7 @@
 			(net 25 "unconnected-(U1-EH-Pad0)")
 			(pinfunction "EH")
 			(pintype "unspecified")
-			(uuid "2bbda3e5-c09f-419d-a576-e04833b2128e")
+			(uuid "80c4bbe5-99b7-4dbb-8549-4e60af3e4495")
 		)
 		(pad "A1" smd rect
 			(at -2.75 -0.8)
