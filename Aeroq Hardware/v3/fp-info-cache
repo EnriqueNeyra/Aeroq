@@ -1,4 +1,4 @@
-25613336071595482
+25608084044814535
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -2666,13 +2666,6 @@ speaker CUI
 0
 2
 2
-CONN-SMD_5P-P2.00_ZX-PH2.0-WT5P
-CONN-SMD_5P-P2.00_ZX-PH2.0-WT5P
-
-
-0
-7
-7
 Calibration_Scale
 Gauge_10mm_Type1_CopperTop
 Gauge, Massstab, 10mm, CopperTop, Type 1,
@@ -59163,13 +59156,6 @@ One digit LED 7 segment SA39-11 SC39-11 SA39-12 SC39-12
 0
 10
 10
-FPC-SMD_24P-P0.50_FPC-05FB-24PH20
-FPC-SMD_24P-P0.50_FPC-05FB-24PH20
-
-
-0
-26
-26
 Ferrite_THT
 LairdTech_28C0236-0JW-10
 Ferrite, vertical, LairdTech 28C0236-0JW-10, https://assets.lairdtech.com/home/brandworld/files/28C0236-0JW-10.pdf, JW Miller core https://www.bourns.com/products/magnetic-products/j.w.-miller-through-hole-ferrite-beads-emi-filters
@@ -90208,6 +90194,55 @@ Potentiometer vertical vishay
 0
 3
 3
+Project Footprints
+FPC-SMD_24P-P0.50_FPC-05FB-24PH20
+
+
+0
+26
+26
+Project Footprints
+SOD-523_L1.2-W0.8-LS1.6-BI
+
+
+0
+2
+2
+Project Footprints
+SOD3715X145N
+
+
+0
+2
+2
+Project Footprints
+SW-SMD_L3.9-W3.0-P4.45
+
+
+0
+2
+2
+Project Footprints
+TYPE-C-SMD_USB4120-03-C
+
+
+0
+20
+17
+Project Footprints
+XCVR_ESP32-C3-MINI-1-N4
+
+
+0
+61
+61
+Project Footprints
+XDCR_SCD40-D-R1
+
+
+0
+21
+21
 RF
 Skyworks_SKY13575_639LF
 http://www.skyworksinc.com/uploads/documents/SKY13575_639LF_203270D.pdf
@@ -93764,20 +93799,6 @@ rotary encoder illuminated switch vertical
 0
 9
 8
-SOD-523_L1.2-W0.8-LS1.6-BI
-SOD-523_L1.2-W0.8-LS1.6-BI
-
-
-0
-2
-2
-SW-SMD_L3.9-W3.0-P4.45
-SW-SMD_L3.9-W3.0-P4.45
-
-
-0
-2
-2
 Sensor
 ASAIR_AM2302_P2.54mm_Lead2.75mm_TabDown
 Temperature and humidity module, http://akizukidenshi.com/download/ds/aosong/AM2302.pdf
@@ -101891,13 +101912,6 @@ igbt diode module
 0
 25
 25
-USBC_SMD_VERTICAL
-TYPE-C-SMD_USB4120-03-C
-
-
-0
-20
-17
 Valve
 Valve_ECC-83-1
 Valve ECC-83-1 round pins
@@ -102682,38 +102696,3 @@ Varistor VF
 0
 2
 2
-custom_footprints
-SOD3715X145N
-
-
-0
-2
-2
-custom_footprints
-SW_TS-1187A-B-A-B
-
-
-0
-4
-4
-custom_footprints
-TVS_LESD5D5.0CT1G
-
-
-0
-2
-2
-custom_footprints
-XCVR_ESP32-C3-MINI-1-N4
-
-
-0
-61
-61
-custom_footprints
-XDCR_SCD40-D-R1
-
-
-0
-21
-21

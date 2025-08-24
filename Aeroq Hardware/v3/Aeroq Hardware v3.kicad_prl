@@ -1,6 +1,6 @@
 {
   "board": {
-    "active_layer": 5,
+    "active_layer": 0,
     "active_layer_preset": "",
     "auto_track_width": true,
     "hidden_netclasses": [],
@@ -36,6 +36,7 @@
       "grid",
       "footprints_front",
       "footprints_back",
+      "footprint_values",
       "footprint_references",
       "tracks",
       "drc_errors",

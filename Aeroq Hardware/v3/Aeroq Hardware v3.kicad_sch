@@ -5390,6 +5390,12 @@
 		(uuid "6189db0c-52cb-4de5-b5a4-88b6db9ce77b")
 	)
 	(junction
+		(at 213.36 134.62)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "619783ab-8a15-4657-9ee2-99b274f313bd")
+	)
+	(junction
 		(at 38.1 67.31)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5648,7 +5654,7 @@
 		(uuid "ca70d929-a2b2-4135-9c3c-94e5e0e484c4")
 	)
 	(no_connect
-		(at 179.07 148.59)
+		(at 179.07 147.32)
 		(uuid "ed60c016-4f0e-4e56-a7f9-a44c22197b9c")
 	)
 	(wire
@@ -5693,7 +5699,7 @@
 	)
 	(wire
 		(pts
-			(xy 175.26 143.51) (xy 179.07 143.51)
+			(xy 177.8 142.24) (xy 179.07 142.24)
 		)
 		(stroke
 			(width 0)
@@ -5803,7 +5809,7 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 135.89) (xy 213.36 135.89)
+			(xy 209.55 134.62) (xy 213.36 134.62)
 		)
 		(stroke
 			(width 0)
@@ -5850,6 +5856,16 @@
 			(type default)
 		)
 		(uuid "17738e76-64bb-4769-8223-65abad99dddf")
+	)
+	(wire
+		(pts
+			(xy 213.36 149.86) (xy 213.36 151.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1b0a34f7-c0c1-4a0b-a07c-ed6c5a18dd7b")
 	)
 	(wire
 		(pts
@@ -6503,7 +6519,7 @@
 	)
 	(wire
 		(pts
-			(xy 213.36 138.43) (xy 209.55 138.43)
+			(xy 213.36 137.16) (xy 209.55 137.16)
 		)
 		(stroke
 			(width 0)
@@ -6693,7 +6709,7 @@
 	)
 	(wire
 		(pts
-			(xy 175.26 140.97) (xy 179.07 140.97)
+			(xy 176.53 139.7) (xy 179.07 139.7)
 		)
 		(stroke
 			(width 0)
@@ -6933,7 +6949,7 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 151.13) (xy 213.36 151.13)
+			(xy 209.55 149.86) (xy 213.36 149.86)
 		)
 		(stroke
 			(width 0)
@@ -7020,6 +7036,16 @@
 			(type default)
 		)
 		(uuid "7e0ee49b-5d03-4003-858a-c314907c34b9")
+	)
+	(wire
+		(pts
+			(xy 177.8 142.24) (xy 177.8 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7e9dfa04-762c-4b70-94d4-6f962f2d74e2")
 	)
 	(wire
 		(pts
@@ -7253,6 +7279,16 @@
 	)
 	(wire
 		(pts
+			(xy 213.36 134.62) (xy 213.36 135.89)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "94867088-b911-4bc5-9cd0-127499a29d15")
+	)
+	(wire
+		(pts
 			(xy 231.14 107.95) (xy 231.14 106.68)
 		)
 		(stroke
@@ -7293,6 +7329,16 @@
 	)
 	(wire
 		(pts
+			(xy 176.53 139.7) (xy 176.53 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "96b93e29-3298-4efc-8db2-c48829bec431")
+	)
+	(wire
+		(pts
 			(xy 57.15 175.26) (xy 64.77 175.26)
 		)
 		(stroke
@@ -7330,6 +7376,16 @@
 			(type default)
 		)
 		(uuid "99d059db-1d3f-47fa-a734-d74170983653")
+	)
+	(wire
+		(pts
+			(xy 176.53 140.97) (xy 175.26 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9ad41ce1-8a35-4d17-839e-6720c980f88b")
 	)
 	(wire
 		(pts
@@ -7393,7 +7449,7 @@
 	)
 	(wire
 		(pts
-			(xy 213.36 133.35) (xy 213.36 135.89)
+			(xy 213.36 133.35) (xy 213.36 134.62)
 		)
 		(stroke
 			(width 0)
@@ -7963,7 +8019,7 @@
 	)
 	(wire
 		(pts
-			(xy 213.36 135.89) (xy 213.36 138.43)
+			(xy 213.36 135.89) (xy 213.36 137.16)
 		)
 		(stroke
 			(width 0)
@@ -8280,6 +8336,16 @@
 			(type default)
 		)
 		(uuid "f920b942-6d97-4310-b158-c4f70a1c7cb1")
+	)
+	(wire
+		(pts
+			(xy 177.8 143.51) (xy 175.26 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f95c34b2-186f-4178-b332-4700fe79cb40")
 	)
 	(wire
 		(pts
@@ -10612,7 +10678,7 @@
 				)
 			)
 		)
-		(property "Footprint" "SW-SMD_L3.9-W3.0-P4.45:SW-SMD_L3.9-W3.0-P4.45"
+		(property "Footprint" "Project Footprints:SW-SMD_L3.9-W3.0-P4.45"
 			(at 135.89 72.39 0)
 			(effects
 				(font
@@ -11130,7 +11196,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "SOD-523_L1.2-W0.8-LS1.6-BI:SOD-523_L1.2-W0.8-LS1.6-BI"
+		(property "Footprint" "Project Footprints:SOD-523_L1.2-W0.8-LS1.6-BI"
 			(at 90.17 59.69 0)
 			(effects
 				(font
@@ -11243,7 +11309,7 @@
 				)
 			)
 		)
-		(property "Footprint" "USBC_SMD_VERTICAL:TYPE-C-SMD_USB4120-03-C"
+		(property "Footprint" "Project Footprints:TYPE-C-SMD_USB4120-03-C"
 			(at 52.07 46.99 0)
 			(effects
 				(font
@@ -11800,7 +11866,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "SOD-523_L1.2-W0.8-LS1.6-BI:SOD-523_L1.2-W0.8-LS1.6-BI"
+		(property "Footprint" "Project Footprints:SOD-523_L1.2-W0.8-LS1.6-BI"
 			(at 82.55 59.69 0)
 			(effects
 				(font
@@ -12122,7 +12188,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "SOD-523_L1.2-W0.8-LS1.6-BI:SOD-523_L1.2-W0.8-LS1.6-BI"
+		(property "Footprint" "Project Footprints:SOD-523_L1.2-W0.8-LS1.6-BI"
 			(at 96.52 59.69 0)
 			(effects
 				(font
@@ -12235,7 +12301,7 @@
 				)
 			)
 		)
-		(property "Footprint" "SW-SMD_L3.9-W3.0-P4.45:SW-SMD_L3.9-W3.0-P4.45"
+		(property "Footprint" "Project Footprints:SW-SMD_L3.9-W3.0-P4.45"
 			(at 135.89 34.29 0)
 			(effects
 				(font
@@ -14429,7 +14495,7 @@
 				)
 			)
 		)
-		(property "Footprint" "custom_footprints:XCVR_ESP32-C3-MINI-1-N4"
+		(property "Footprint" "Project Footprints:XCVR_ESP32-C3-MINI-1-N4"
 			(at 242.57 64.77 0)
 			(effects
 				(font
@@ -15776,7 +15842,7 @@
 	)
 	(symbol
 		(lib_id "SCD40-D-R1:SCD40-D-R1")
-		(at 194.31 143.51 0)
+		(at 194.31 142.24 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -15785,7 +15851,7 @@
 		(fields_autoplaced yes)
 		(uuid "ef18efa4-81b9-4d04-a392-f89b367375e5")
 		(property "Reference" "U4"
-			(at 194.31 128.27 0)
+			(at 194.31 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15793,15 +15859,15 @@
 			)
 		)
 		(property "Value" "SCD40-D-R1"
-			(at 194.31 130.81 0)
+			(at 194.31 129.54 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Footprint" "Sensor:Sensirion_SCD4x-1EP_10.1x10.1mm_P1.25mm_EP4.8x4.8mm"
-			(at 194.31 143.51 0)
+		(property "Footprint" "Project Footprints:XDCR_SCD40-D-R1"
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15811,7 +15877,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15820,7 +15886,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15829,7 +15895,7 @@
 			)
 		)
 		(property "MF" "Sensirion AG"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15839,7 +15905,7 @@
 			)
 		)
 		(property "MAXIMUM_PACKAGE_HEIGHT" "6.8mm"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15849,7 +15915,7 @@
 			)
 		)
 		(property "Package" "None"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15859,7 +15925,7 @@
 			)
 		)
 		(property "Price" "None"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15869,7 +15935,7 @@
 			)
 		)
 		(property "Check_prices" "https://www.snapeda.com/parts/SCD40-D-R1/Sensirion/view-part/?ref=eda"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15879,7 +15945,7 @@
 			)
 		)
 		(property "STANDARD" "Manufacturer Recommendations"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15889,7 +15955,7 @@
 			)
 		)
 		(property "PARTREV" "1.2"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15899,7 +15965,7 @@
 			)
 		)
 		(property "SnapEDA_Link" "https://www.snapeda.com/parts/SCD40-D-R1/Sensirion/view-part/?ref=snap"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15909,7 +15975,7 @@
 			)
 		)
 		(property "MP" "SCD40-D-R1"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15919,7 +15985,7 @@
 			)
 		)
 		(property "Description_1" "Carbon Dioxide (CO2), Humidity, Temperature Sensor I2C"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15929,7 +15995,7 @@
 			)
 		)
 		(property "SNAPEDA_PN" "SCD41-D-R2"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15939,7 +16005,7 @@
 			)
 		)
 		(property "Availability" "In Stock"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15949,7 +16015,7 @@
 			)
 		)
 		(property "MANUFACTURER" "Sensirion"
-			(at 194.31 143.51 0)
+			(at 194.31 142.24 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16058,7 +16124,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "FPC-SMD_24P-P0.50_FPC-05FB-24PH20:FPC-SMD_24P-P0.50_FPC-05FB-24PH20"
+		(property "Footprint" "Project Footprints:FPC-SMD_24P-P0.50_FPC-05FB-24PH20"
 			(at 152.4 160.02 0)
 			(effects
 				(font
