@@ -15,8 +15,13 @@
 
 ## Required Hardware  
 
-https://www.printables.com/model/1394330-indoor-air-quality-monitor
-https://www.pcbway.com/project/shareproject/Air_Quality_Monitor_a6b051c5.html
+| Item | Link |
+|------|------|
+| Custom PCB Order | [PCBWay](https://www.pcbway.com/project/shareproject/Air_Quality_Monitor_a6b051c5.html) |
+| SEN54 (VOC/PM) Sensor | [Sensirion](https://sensirion.com/products/catalog/SEN54) |
+| Enclosure 3D Print Files | [Printables](https://www.printables.com/model/1394330-indoor-air-quality-monitor) |
+| 3.7" 240x416 E-Paper Display | [Elecrow](https://www.elecrow.com/3-7-inch-240-416-e-paper-display-black-white-e-ink-display-with-spi-communication.html?srsltid=AfmBOorSii7sAGDAezYqj44_16daoAiQB-C5RoZuXMNfL8XauDDESF2X) |
+| JST GH Connector Kit | [Amazon](https://amzn.to/4lGmWBa) |
 
 ---
 
