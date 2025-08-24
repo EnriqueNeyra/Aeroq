@@ -7,6 +7,7 @@
 // #include <Fonts/FreeSansBold12pt7b.h>
 // #include <Fonts/FreeSansBold18pt7b.h>
 // #include <Fonts/FreeSansBold24pt7b.h>
+// #include <Fonts/FreeMonoBold9pt7b.h>
 
 // // ==== SPI + Display Pin Configuration ====
 // #define EPD_MOSI  11
@@ -126,114 +127,40 @@
 
 //     // ==== Update Display ====
 //     Serial.println("\n[Display] Updating e-paper...");
+//     display.setFont(&FreeMonoBold9pt7b);
 //     display.setPartialWindow(0, 0, display.width(), display.height());
 //     display.firstPage();
-//     do {
+//        do {
 //         display.fillScreen(GxEPD_WHITE);
-        
-//         // First horizontal line
-//         display.drawLine(0, 102, 416, 102, GxEPD_BLACK);
-//         display.drawLine(0, 103, 416, 103, GxEPD_BLACK);
 
-//         // Vertical lines for Temp, RH, CO2, VOC
-//         display.drawLine(138, 0, 138, 102, GxEPD_BLACK);
-//         display.drawLine(139, 0, 139, 102, GxEPD_BLACK);
+//         display.setCursor(10, 30);
+//         display.printf("CO2: %d ppm", co2);
 
-//         display.drawLine(277, 0, 277, 102, GxEPD_BLACK);
-//         display.drawLine(278, 0, 278, 102, GxEPD_BLACK);
+//         display.setCursor(10, 55);
+//         display.printf("PM1.0: %.1f", pm1);
 
-//         // Horizontal lines for PM1.0, PM2.5, PM4.0, PM10
-//         display.drawLine(36, 148, 190, 148, GxEPD_BLACK);
-//         display.drawLine(226, 148, 380, 148, GxEPD_BLACK);
-//         display.drawLine(36, 194, 190, 194, GxEPD_BLACK);
-//         display.drawLine(226, 194, 380, 194, GxEPD_BLACK);
+//         display.setCursor(10, 80);
+//         display.printf("PM2.5: %.1f", pm2_5);
 
-//         // Bottom horizontal line
-//         display.drawLine(0, 215, 416, 215, GxEPD_BLACK);
-//         display.drawLine(0, 216, 416, 216, GxEPD_BLACK);
-        
-//         display.setTextColor(GxEPD_BLACK);
+//         display.setCursor(10, 105);
+//         display.printf("PM4.0: %.1f", pm4);
 
-//         // Temperature and Humidity Display
-//         display.setFont(&FreeSansBold18pt7b);
-//         display.setCursor(20, 40);
-//         display.printf("%.1f C", avgTemp);
+//         display.setCursor(10, 130);
+//         display.printf("PM10: %.1f", pm10);
 
-//         display.setCursor(20, 90);
-//         display.printf("%.1f%%", avgRH);
+//         display.setCursor(200, 30);
+//         display.printf("Temp: %.1f C", avgTemp);
 
-//         //Co2 and VOC Display
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(147, 25);
-//         display.printf("CO2 (ppm)");
-//         display.setFont(&FreeSansBold24pt7b);
-//         display.setCursor(165, 80);
-//         display.printf("%d", co2);
-        
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(285, 25);
-//         display.printf("VOC Index");
-//         display.setFont(&FreeSansBold24pt7b);
-//         display.setCursor(310, 80);
-//         display.printf("%.0f", voc);
+//         display.setCursor(200, 55);
+//         display.printf("RH: %.1f %%", avgRH);
 
-//         // Particulate Matter Display
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(36, 146);
-//         display.printf("PM1:", pm1);
-//         display.setFont(&FreeSansBold18pt7b);
-//         display.setCursor(105, 146);
-//         display.printf("%.1f", pm1);
+//         display.setCursor(200, 80);
+//         display.printf("VOC: %.1f", voc);
 
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(226, 146);
-//         display.printf("PM2.5:", pm2_5);
-//         display.setFont(&FreeSansBold18pt7b);
-//         display.setCursor(310, 146);
-//         display.printf("%.1f", pm2_5);
-
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(36, 192);
-//         display.printf("PM4:", pm4);
-//         display.setFont(&FreeSansBold18pt7b);
-//         display.setCursor(105, 192);
-//         display.printf("%.1f", pm4);
-
-//         display.setFont(&FreeSansBold12pt7b);
-//         display.setCursor(226, 192);
-//         display.printf("PM10:", pm10);
-//         display.setFont(&FreeSansBold18pt7b);
-//         display.setCursor(310, 192);
-//         display.printf("%.1f", pm10);
-
-//         //drawAirQualityIndicator(co2, voc, pm1, pm2_5, pm4, pm10);
+//         display.setCursor(200, 105);
+//         display.printf("NOx: %.1f", nox);
 
 //     } while (display.nextPage());
 
 //     Serial.println("[Display] Refresh complete.\n");
 // }
-
-// // void drawAirQualityIndicator(uint16_t co2, float voc, float pm1, float pm2_5, float pm4, float pm10) {
-// //     bool isPoor = co2 > 1400 || voc > 250 || pm2_5 > 35 || pm10 > 50;
-// //     bool isModerate = co2 > 800 || voc > 120 || pm2_5 > 12 || pm10 > 20;
-
-// //     int16_t baseY = display.height() - 5;
-// //     int16_t triHeight = 10;
-// //     int16_t triWidth = 12;
-// //     int16_t halfWidth = triWidth / 2;
-
-// //     int16_t x;
-// //     if (isPoor) {
-// //         x = display.width() - 30;
-// //     } else if (isModerate) {
-// //         x = display.width() / 2;
-// //     } else {
-// //         x = 30;
-// //     }
-
-// //     display.fillTriangle(
-// //         x, baseY - triHeight,
-// //         x - halfWidth, baseY,
-// //         x + halfWidth, baseY,
-// //         GxEPD_BLACK);
-// // }
