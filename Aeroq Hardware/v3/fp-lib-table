@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "JST SM05B-GHS-TB(LF)(SN)")(type "EasyEDA / JLCEDA Pro")(uri "${KIPRJMOD}/Libraries/ProLib_pcs_2025-08-23.elibz")(options "")(descr ""))
+)
