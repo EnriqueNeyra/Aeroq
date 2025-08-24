@@ -13,8 +13,11 @@
 
 ---
 
-## Required Hardware
+## Required Hardware  
+
 https://www.printables.com/model/1394330-indoor-air-quality-monitor
+https://www.pcbway.com/project/shareproject/Air_Quality_Monitor_a6b051c5.html
+
 ---
 
 ## Firmware Setup
