@@ -30,3 +30,11 @@ https://www.printables.com/model/1394330-indoor-air-quality-monitor
 ---
 
 ## Using Aeroq
+
+
+## License
+
+This project (hardware, design files, and firmware) is licensed under the 
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+[![License: CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
