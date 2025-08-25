@@ -16,10 +16,12 @@
 
 ### Hardware
 Schematic and PCB designed using KiCad. Schematic, PCB design, and manufacturing files can be found under [Aeroq Hardware/](./Aeroq%20Hardware/v3)
+
 <img width="500" height="1011" alt="image" src="https://github.com/user-attachments/assets/9c807429-ff14-4dc1-8fe5-cacd1b4f265d" />
 
 ### Enclosure
 Two 3D printed components are required for the assembly. Model files can be found under [Aeroq Enclosure/](./Aeroq%20Enclosure)
+
 <img width="500" alt="image" src="https://github.com/user-attachments/assets/4743dbd0-92f9-4496-bc7a-a594504eaffe" />
 
 ### Firmware
@@ -99,6 +101,7 @@ This project uses [PlatformIO](https://platformio.org/), a plugin for VSCode tha
 
 Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), and wait for the initialization to complete.  
 **For optimal measurement accuracy, keep it away from heat sources (electronics, lights, etc) and in an area with minimal clutter.**
+
 <img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/763cf77f-df35-4627-929d-93a298740765" />
 
 
