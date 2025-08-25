@@ -27,6 +27,8 @@
 
 ## Firmware Setup
 
+This project uses PlatformIO, a plugin for VSCode that allows for a streamlined ESP32 development process. Outlined are the steps for flashing firmware to the ESP32-C3-mini...
+
 ---
 
 ## Assembly
@@ -38,7 +40,8 @@
 ---
 
 ## Using Aeroq
-
+Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), and wait for the initialization to complete.
+I**For optimal measurement accuracy, keep it away from heat soruces (electronics, lights, etc) and in an area with minimal clutter.**
 
 ## License
 
