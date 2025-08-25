@@ -5,11 +5,23 @@
 ### A comprehensive indoor air quality monitor, capturing Temperature, Relative Humidity, CO2 (ppm), VOC (Index), and PM 1.0, 2.5, 4.0, 10 (ug/m3)
 
 ## Contents
-
+- [Project Overview](#project-overview)
 - [Required Hardware](#required-hardware)
-- [Firmware Setup](#pi-setup)
+- [Firmware Setup](#firmware-setup)
 - [Assembly](#assembly)
-- [Using Aeroq](#using-the-frame)
+- [Using Aeroq](#using-aeroq)
+
+---
+## Project Overview
+
+# Hardware
+Schematic and PCB designed using KiCad. Schematic, PCB design, and manufacturing files can be found under [Aeroq Hardware/v3/](Aeroq Hardware/v3/)
+
+# Firmware
+Source code for ESP32 firmware, developed with PlatformIO. Can be found under [Aeroq Firmware/](Aeroq Firmware/)
+
+# Enclosure
+Two 3D printed components are required for the assembly. Model files can be found under [Aeroq Enclosure/](Aeroq Enclosure/)
 
 ---
 
@@ -27,7 +39,7 @@
 
 ## Firmware Setup
 
-This project uses PlatformIO, a plugin for VSCode that allows for a streamlined ESP32 development process. Outlined are the steps for flashing firmware to the ESP32-C3-mini...
+This project uses PlatformIO, a plugin for VSCode that allows for a streamlined ESP32 development process. Outlined are the steps for flashing firmware to the ESP32-C3-MINI...
 
 ---
 
@@ -40,8 +52,9 @@ This project uses PlatformIO, a plugin for VSCode that allows for a streamlined 
 ---
 
 ## Using Aeroq
+
 Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), and wait for the initialization to complete.  
-**For optimal measurement accuracy, keep it away from heat soruces (electronics, lights, etc) and in an area with minimal clutter.**
+**For optimal measurement accuracy, keep it away from heat sources (electronics, lights, etc) and in an area with minimal clutter.**
 
 ## License
 
