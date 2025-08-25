@@ -78,9 +78,20 @@ This project uses [PlatformIO](https://platformio.org/), a plugin for VSCode tha
 
 ## Assembly
 
-### 1. ...
-### 2. ...
-### 3. ...
+### 1. Components should connect as pictured below
+<p align="center"><img src="https://github.com/user-attachments/assets/5740bab2-e6b4-4e19-9f66-7cb31afb2b5f" width="700"></p>
+
+### 2. Insert the SEN54 into the slot in the enclosure, ensuring it is pressed in all the way
+<p align="center"><img src="https://github.com/user-attachments/assets/f272257f-dbc3-4e41-ade8-5990a57cf071" width="700"></p>
+
+### 3. Place display into frame
+<p align="center"><img src="https://github.com/user-attachments/assets/dd597183-dd0e-4cfe-8b03-1174462b1bcc" width="700"></p>
+
+### 4. Orient the PCB so that it sits against the back of the display. This CAD assembly image illustrates the correct component orientation
+<p align="center"><img src="https://github.com/user-attachments/assets/d5072620-c4a7-4da5-b4a5-5fcc545736fb" width="700"></p>
+
+### 5. Press the enclosure shut. The USB-C port should be visible and accessible through the slot at the rear
+<p align="center"><img src="https://github.com/user-attachments/assets/f5b62217-b6d0-4359-aae4-ba4664226a09" width="700"></p>
 
 ---
 
@@ -88,7 +99,7 @@ This project uses [PlatformIO](https://platformio.org/), a plugin for VSCode tha
 
 Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), and wait for the initialization to complete.  
 **For optimal measurement accuracy, keep it away from heat sources (electronics, lights, etc) and in an area with minimal clutter.**
-<img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/4e70900d-991c-4c67-8099-969e4073f7d7" />
+<img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/763cf77f-df35-4627-929d-93a298740765" />
 
 
 ## License
