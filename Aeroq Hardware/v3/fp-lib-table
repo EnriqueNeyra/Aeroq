@@ -1,5 +1,5 @@
 (fp_lib_table
   (version 7)
-  (lib (name "JST SM05B-GHS-TB(LF)(SN)")(type "EasyEDA / JLCEDA Pro")(uri "${KIPRJMOD}/Libraries/JST SM05B-GHS-TB(LF)(SN).elibz")(options "")(descr ""))
   (lib (name "Project Footprints")(type "KiCad")(uri "${KIPRJMOD}/Footprints")(options "")(descr ""))
+  (lib (name "XUNPU WAFER-GH1.25-6PWB")(type "EasyEDA / JLCEDA Pro")(uri "${KIPRJMOD}/Libraries/XUNPU WAFER-GH1.25-6PWB.elibz")(options "")(descr ""))
 )
