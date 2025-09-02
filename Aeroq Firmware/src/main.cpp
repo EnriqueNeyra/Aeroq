@@ -7,6 +7,7 @@
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
+#include "aws_iot.h"
 
 // ==== SPI + Display Pin Configuration ====
 #define EPD_MOSI  7
@@ -94,6 +95,7 @@ void setup() {
     Serial.printf("SEN54 startMeasurement() -> %d\n", error);
 
     Serial.println("Setup complete.\n");
+    aws_iot_init();
     delay(5000);
 
     // Clear the display again to ensure no old text remains
@@ -105,7 +107,12 @@ void setup() {
 }
 
 void loop() {
-    delay(5000); // 5s update cycle
+    // 5s update cycle
+    for (int i=0; i<40; ++i) {
+        aws_iot_loop();
+        delay(100);
+    }
+
     Serial.println("========== SENSOR UPDATE ==========");
 
     // ==== Read SCD41 ====
@@ -117,6 +124,8 @@ void loop() {
         return;
     }
 
+    aws_iot_loop();
+
     uint16_t co2 = 0;
     float scdTemp = 0.0, scdRH = 0.0;
     error = scd41.readMeasurement(co2, scdTemp, scdRH);
@@ -124,6 +133,8 @@ void loop() {
         Serial.printf("[SCD41] readMeasurement() error = %d\n", error);
         return;
     }
+
+    aws_iot_loop();
 
     Serial.printf("[SCD41] CO2: %d ppm\n", co2);
     Serial.printf("[SCD41] Temp: %.2f °C\n", scdTemp);
@@ -138,6 +149,8 @@ void loop() {
         return;
     }
 
+    aws_iot_loop();
+
     Serial.printf("[SEN54] Temp: %.2f °C, RH: %.2f %%\n", senTemp, senRH);
     Serial.printf("[SEN54] PM1.0: %.2f, PM2.5: %.2f, PM4.0: %.2f, PM10: %.2f ug/m3\n", pm1, pm2_5, pm4, pm10);
     Serial.printf("[SEN54] VOC Index: %.2f, NOx Index: %.2f\n", voc, nox);
@@ -151,6 +164,7 @@ void loop() {
     display.setPartialWindow(0, 0, display.width(), display.height());
     display.firstPage();
     do {
+        aws_iot_loop();
         display.fillScreen(GxEPD_WHITE);
         
         // First horizontal line
@@ -233,6 +247,21 @@ void loop() {
     } while (display.nextPage());
 
     Serial.println("[Display] Refresh complete.\n");
+
+    aws_iot_loop();  // keep the connection healthy
+
+    Telemetry t {
+    .device_id = "esp32c3-01",
+    .co2       = co2,
+    .pm25      = pm2_5,
+    .pm10      = pm10,
+    .voc_index = voc,
+    .temp_c    = avgTemp,
+    .rh        = avgRH
+    };
+
+    bool ok = aws_iot_publish_telemetry(t);
+    Serial.printf("[AWS IoT] publish %s\n", ok ? "OK" : "FAIL");
 }
 
 // void drawAirQualityIndicator(uint16_t co2, float voc, float pm1, float pm2_5, float pm4, float pm10) {
