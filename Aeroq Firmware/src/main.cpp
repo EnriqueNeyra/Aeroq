@@ -1,3 +1,4 @@
+#include "secrets.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -7,7 +8,10 @@
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
-#include "aws_iot.h"
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include "WiFi.h"
 
 // ==== SPI + Display Pin Configuration ====
 #define EPD_MOSI  7
@@ -31,7 +35,85 @@ SensirionI2cScd4x scd41;
 static char errorMessage[256];
 static int16_t error;
 
+#define AWS_IOT_PUBLISH_TOPIC   "aeroq-esp32c3-01/pub"
+#define AWS_IOT_SUBSCRIBE_TOPIC "aeroq-esp32c3-01/sub"
 #define NO_ERROR 0
+
+WiFiClientSecure net = WiFiClientSecure();
+PubSubClient client(net);
+
+void messageHandler(char* topic, byte* payload, unsigned int length)
+{
+    Serial.print("incoming: ");
+    Serial.println(topic);
+
+    JsonDocument doc;
+    deserializeJson(doc, payload);
+    const char* message = doc["message"];
+    Serial.println(message);
+}
+
+void connectAWS()
+{
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    Serial.println("Connecting to Wi-Fi");
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+
+    // Configure WiFiClientSecure to use the AWS IoT device credentials
+    net.setCACert(AWS_CERT_CA);
+    net.setCertificate(AWS_CERT_CRT);
+    net.setPrivateKey(AWS_CERT_PRIVATE);
+
+    // Connect to the MQTT broker on the AWS endpoint we defined earlier
+    client.setServer(AWS_IOT_ENDPOINT, 8883);
+
+    // Create a message handler
+    client.setCallback(messageHandler);
+
+    Serial.println("Connecting to AWS IOT");
+
+    while (!client.connect(THINGNAME))
+    {
+        Serial.print(".");
+        delay(100);
+    }
+
+    if (!client.connected())
+    {
+    Serial.println("AWS IoT Timeout!");
+    return;
+    }
+
+    // Subscribe to a topic
+    client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
+
+    Serial.println("AWS IoT Connected!");
+}
+
+void publishMessage(uint16_t co2, float pm1, float pm25, float pm4, float pm10, float voc_index, float temp_c, float rh)
+{
+    JsonDocument doc;
+    doc["co2"]        = co2;
+    doc["pm1"]        = pm1;
+    doc["pm25"]       = pm25;
+    doc["pm4"]        = pm4;
+    doc["pm10"]       = pm10;
+    doc["voc_index"]  = voc_index;
+    doc["temp_c"]     = roundf(temp_c * 10) / 10.0;
+    doc["temp_f"]     = (roundf(temp_c * 10) / 10.0) * (9/5) + 32;
+    doc["rh"]         = roundf(rh * 10) / 10.0; // convert to Fahrenheit
+    char jsonBuffer[512];
+    serializeJson(doc, jsonBuffer);
+
+    client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer);
+}
 
 void setup() {
     delay(1000);  // Delay to allow USB CDC setup
@@ -95,7 +177,7 @@ void setup() {
     Serial.printf("SEN54 startMeasurement() -> %d\n", error);
 
     Serial.println("Setup complete.\n");
-    aws_iot_init();
+    connectAWS();
     delay(5000);
 
     // Clear the display again to ensure no old text remains
@@ -108,9 +190,9 @@ void setup() {
 
 void loop() {
     // 5s update cycle
-    for (int i=0; i<40; ++i) {
-        aws_iot_loop();
-        delay(100);
+    for (int i=0; i<4; ++i) {
+        client.loop();
+        delay(1000);
     }
 
     Serial.println("========== SENSOR UPDATE ==========");
@@ -124,8 +206,6 @@ void loop() {
         return;
     }
 
-    aws_iot_loop();
-
     uint16_t co2 = 0;
     float scdTemp = 0.0, scdRH = 0.0;
     error = scd41.readMeasurement(co2, scdTemp, scdRH);
@@ -133,8 +213,6 @@ void loop() {
         Serial.printf("[SCD41] readMeasurement() error = %d\n", error);
         return;
     }
-
-    aws_iot_loop();
 
     Serial.printf("[SCD41] CO2: %d ppm\n", co2);
     Serial.printf("[SCD41] Temp: %.2f °C\n", scdTemp);
@@ -149,8 +227,6 @@ void loop() {
         return;
     }
 
-    aws_iot_loop();
-
     Serial.printf("[SEN54] Temp: %.2f °C, RH: %.2f %%\n", senTemp, senRH);
     Serial.printf("[SEN54] PM1.0: %.2f, PM2.5: %.2f, PM4.0: %.2f, PM10: %.2f ug/m3\n", pm1, pm2_5, pm4, pm10);
     Serial.printf("[SEN54] VOC Index: %.2f, NOx Index: %.2f\n", voc, nox);
@@ -164,7 +240,7 @@ void loop() {
     display.setPartialWindow(0, 0, display.width(), display.height());
     display.firstPage();
     do {
-        aws_iot_loop();
+        client.loop();
         display.fillScreen(GxEPD_WHITE);
         
         // First horizontal line
@@ -248,20 +324,7 @@ void loop() {
 
     Serial.println("[Display] Refresh complete.\n");
 
-    aws_iot_loop();  // keep the connection healthy
-
-    Telemetry t {
-    .device_id = "esp32c3-01",
-    .co2       = co2,
-    .pm25      = pm2_5,
-    .pm10      = pm10,
-    .voc_index = voc,
-    .temp_c    = avgTemp,
-    .rh        = avgRH
-    };
-
-    bool ok = aws_iot_publish_telemetry(t);
-    Serial.printf("[AWS IoT] publish %s\n", ok ? "OK" : "FAIL");
+    publishMessage(co2, pm1, pm2_5, pm4, pm10, voc, avgTemp, avgRH);
 }
 
 // void drawAirQualityIndicator(uint16_t co2, float voc, float pm1, float pm2_5, float pm4, float pm10) {
