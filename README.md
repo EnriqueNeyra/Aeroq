@@ -37,7 +37,7 @@ Source code for ESP32 firmware, developed with PlatformIO. Can be found under [A
 | SEN54 (VOC/PM) Sensor | [Sensirion](https://sensirion.com/products/catalog/SEN54) |
 | Enclosure 3D Print Files | [Printables](https://www.printables.com/model/1394330-indoor-air-quality-monitor) |
 | 3.7" 240x416 E-Paper Display | [GoodDisplay](https://buyepaper.com/products/37-inch-416x240-e-paper-black-and-white-spi-fast-refresh-electronic-eink-display-screen-esl-gdey037t03) |
-| JST GH Connector Kit | [Amazon](https://amzn.to/4lGmWBa) |
+| JST GH 6 Pin Connector | [Adafruit](https://www.adafruit.com/product/5754#description) |
 
 ---
 
