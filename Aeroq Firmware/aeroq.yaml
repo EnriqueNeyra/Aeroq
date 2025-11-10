@@ -1,94 +1,74 @@
 esphome:
   name: aeroq
   friendly_name: Aeroq Air Monitor
-  # Pull GxEPD2 so the custom component compiles cleanly
+  includes:
+    - src/aeroq_display.h
   platformio_options:
     lib_deps:
-      - zinggjm/GxEPD2@^1.5.0
+      - zinggjm/GxEPD2@^1.6.4
+      - adafruit/Adafruit GFX Library@^1.12.3
+      - adafruit/Adafruit BusIO@^1.17.4
+    lib_ldf_mode: deep+
 
 esp32:
-  board: esp32-s3-devkitc-1
-  framework: { type: arduino }
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+    version: recommended
 
 logger:
 api:
 ota:
-time:
-  - platform: sntp
-    id: sntp_time
 
 wifi:
-  ap: { ssid: "Aeroq-Setup", password: "setup-1234" }
-  reboot_timeout: 0s
-api:
-  reboot_timeout: 0s
+  ap:
+    ssid: "Aeroq-Setup-${mac_suffix}"
+    password: "aeroqaeroq"
 captive_portal:
 improv_serial:
 
-# Optional local page with live values
-web_server:
-  port: 80
-  auth: { username: admin, password: "air" }
+# Allow device to make HTTP requests
+http_request:
 
-# I2C bus matches your PCB
+# Two OTA methods: normal ESPHome (HA push) and HTTP pull (HA auto-check)
+ota:
+  - platform: esphome
+  - platform: http_request
+    id: ota_http
+
+# Your PCB wiring (C3 strapping-pin warnings are expected; safe on your board)
 i2c:
   sda: 8
   scl: 0
   scan: true
 
-# SCD41 + SEN54 at 5s
 sensor:
   - platform: scd4x
-    id: scd4x
-    address: 0x62
-    co2:         { id: co2,      name: "CO₂" }
-    temperature: { id: t_scd,    name: "Temperature (SCD4x)" }
-    humidity:    { id: rh_scd,   name: "Humidity (SCD4x)" }
-    update_interval: 5s
+    id: scd41
+    co2:         { name: "CO2", id: co2, accuracy_decimals: 0 }
+    temperature: { name: "Temp (SCD41)", id: t_scd, accuracy_decimals: 1 }
+    humidity:    { name: "RH (SCD41)",   id: rh_scd, accuracy_decimals: 1 }
+    update_interval: 10s
 
   - platform: sen5x
-    id: sen54
-    pm_1_0:      { id: pm1_0,   name: "PM1.0" }
-    pm_2_5:      { id: pm2_5,   name: "PM2.5" }
-    pm_4_0:      { id: pm4_0,   name: "PM4.0" }
-    pm_10_0:     { id: pm10_0,  name: "PM10" }
-    voc:         { id: voc_index, name: "VOC Index" }
-    temperature: { id: t_sen,   name: "Temperature (SEN54)" }
-    humidity:    { id: rh_sen,  name: "Humidity (SEN54)" }
-    update_interval: 5s
+    pm_1_0:      { name: "PM1.0", id: pm1_0, accuracy_decimals: 1 }
+    pm_2_5:      { name: "PM2.5", id: pm2_5, accuracy_decimals: 1 }
+    pm_4_0:      { name: "PM4.0", id: pm4_0, accuracy_decimals: 1 }
+    pm_10_0:     { name: "PM10",  id: pm10_0, accuracy_decimals: 1 }
+    voc:         { name: "VOC Index", id: voc_index, accuracy_decimals: 0 }
+    temperature: { name: "Temp (SEN54)", id: t_sen, accuracy_decimals: 1 }
+    humidity:    { name: "RH (SEN54)",   id: rh_sen, accuracy_decimals: 1 }
+    update_interval: 10s
 
-# Tiny HA-exposed settings (can add more later)
-number:
-  - platform: template
-    name: "PM2.5 Alert (µg/m³)"
-    id: pm25_alert
-    min_value: 5
-    max_value: 150
-    step: 1
-    restore_value: true
-    initial_value: 15
-
-button:
-  - platform: template
-    name: "Force Redraw"
-    on_press:
-      then:
-        - lambda: |-
-            aeroq_display::force_redraw();
-
-# Draw every 5s using partial updates only (matches your loop cadence)
 interval:
   - interval: 5s
     then:
       - lambda: |-
           aeroq_display::tick_and_draw(
-            id(co2).state,
-            id(pm2_5).state,
-            id(voc_index).state,
-            isnan(id(t_scd).state) ? id(t_sen).state : id(t_scd).state,
-            isnan(id(rh_scd).state) ? id(rh_sen).state : id(rh_scd).state,
-            id(pm25_alert).state
+            (uint16_t) id(co2).state,
+            id(t_scd).state, id(rh_scd).state,
+            id(t_sen).state, id(rh_sen).state,
+            id(pm1_0).state, id(pm2_5).state,
+            id(pm4_0).state, id(pm10_0).state,
+            id(voc_index).state
           );
-
-external_components:
-  - source: components
