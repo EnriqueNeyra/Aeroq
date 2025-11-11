@@ -1,0 +1,112 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ none ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ESPHome firmware
+        id: esphome
+        uses: esphome/build-action@v7
+        with:
+          yaml-file: "Aeroq Firmware/aeroq.yaml"
+          # Optional: pin ESPHome version instead of "latest"
+          # version: "2025.10.4"
+          complete-manifest: false
+
+      - name: Copy firmware and update manifest.json
+        run: |
+          set -e
+
+          # Outputs from esphome/build-action
+          OUT_NAME="${{ steps.esphome.outputs.name }}"
+          PROJECT_VERSION="${{ steps.esphome.outputs['project-version'] }}"
+
+          echo "Build output name: ${OUT_NAME}"
+          echo "Project version : ${PROJECT_VERSION}"
+
+          if [ -z "${PROJECT_VERSION}" ]; then
+            echo "ERROR: esphome.project.version is not set in aeroq.yaml"
+            exit 1
+          fi
+
+          OUT_DIR="${OUT_NAME}"
+
+          FACTORY_SRC="${OUT_DIR}/${OUT_NAME}.factory.bin"
+          OTA_SRC="${OUT_DIR}/${OUT_NAME}.ota.bin"
+
+          if [ ! -f "${FACTORY_SRC}" ] || [ ! -f "${OTA_SRC}" ]; then
+            echo "ERROR: Expected firmware files not found:"
+            ls -R "${OUT_DIR}" || true
+            exit 1
+          fi
+
+          mkdir -p docs/firmware
+
+          FACTORY_DST="docs/firmware/aeroq-factory-${PROJECT_VERSION}.bin"
+          OTA_DST="docs/firmware/aeroq-ota-${PROJECT_VERSION}.bin"
+
+          cp "${FACTORY_SRC}" "${FACTORY_DST}"
+          cp "${OTA_SRC}"      "${OTA_DST}"
+
+          echo "Copied firmware artifacts:"
+          echo "  ${FACTORY_DST}"
+          echo "  ${OTA_DST}"
+
+          # Ensure jq is available
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+          # Compute MD5 for OTA file
+          OTA_MD5=$(md5sum "${OTA_DST}" | cut -d' ' -f1)
+          echo "OTA MD5: ${OTA_MD5}"
+
+          MANIFEST_IN="docs/manifest.json"
+          MANIFEST_TMP="docs/manifest.tmp.json"
+
+          if [ ! -f "${MANIFEST_IN}" ]; then
+            echo "ERROR: ${MANIFEST_IN} not found"
+            exit 1
+          fi
+
+          # Update manifest: version, paths, md5
+          jq --arg ver "$PROJECT_VERSION" \
+             --arg factory "firmware/aeroq-factory-${PROJECT_VERSION}.bin" \
+             --arg ota "firmware/aeroq-ota-${PROJECT_VERSION}.bin" \
+             --arg md5 "$OTA_MD5" \
+             '
+             .version = $ver
+             | .builds[0].parts[0].path = $factory
+             | .builds[0].ota.path = $ota
+             | .builds[0].ota.md5 = $md5
+             ' "${MANIFEST_IN}" > "${MANIFEST_TMP}"
+
+          mv "${MANIFEST_TMP}" "${MANIFEST_IN}"
+
+          echo "Updated ${MANIFEST_IN}:"
+          cat "${MANIFEST_IN}"
+
+          # Commit & push if changed
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/firmware docs/manifest.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update Aeroq firmware artifacts v${PROJECT_VERSION} [skip ci]"
+            git push
+          fi

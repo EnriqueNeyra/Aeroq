@@ -5,12 +5,15 @@
     {
       "chipFamily": "ESP32-C3",
       "parts": [
-        { "path": "firmware/aeroq-factory-1.0.0.bin", "offset": 0 }
+        {
+          "path": "firmware/aeroq-factory-1.0.0.bin",
+          "offset": 0
+        }
       ],
       "ota": {
         "path": "firmware/aeroq-ota-1.0.0.bin",
-        "md5": "1234567890abcdef1234567890abcdef",
-        "summary": "Initial public release"
+        "md5": "D08FCA81614CBDD2A78B7B003BE263C7",
+        "summary": "Initial release of Aeroq firmware"
       }
     }
   ]

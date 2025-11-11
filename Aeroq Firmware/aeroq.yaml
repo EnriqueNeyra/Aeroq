@@ -1,6 +1,10 @@
 esphome:
   name: aeroq
+  name_add_mac_suffix: true
   friendly_name: Aeroq Air Monitor
+  project:
+    name: "neyra.aeroq"
+    version: "1.0.0"
   includes:
     - src/aeroq_display.h
   platformio_options:
@@ -16,25 +20,29 @@ esp32:
     type: arduino
     version: recommended
 
-logger:
-api:
-ota:
-
 wifi:
   ap:
-    ssid: "Aeroq-Setup-${mac_suffix}"
-    password: "aeroqaeroq"
+    # ssid: "Aeroq-Setup"
+    # No password for open AP
 captive_portal:
 improv_serial:
 
-# Allow device to make HTTP requests
+logger:
+api:
 http_request:
+  verify_ssl: false
 
-# Two OTA methods: normal ESPHome (HA push) and HTTP pull (HA auto-check)
 ota:
   - platform: esphome
   - platform: http_request
     id: ota_http
+
+update:
+  - platform: http_request
+    id: aeroq_fw_update
+    name: "Aeroq Firmware"
+    source: "https://enriqueneyra.github.io/Aeroq/manifest.json"
+    update_interval: 24h
 
 # Your PCB wiring (C3 strapping-pin warnings are expected; safe on your board)
 i2c:
