@@ -20,12 +20,6 @@ esphome:
       - adafruit/Adafruit GFX Library@^1.12.3
       - adafruit/Adafruit BusIO@^1.15.0
 
-external_components:
-  - source:
-      type: local
-      path: components
-    components: [aeroq_ui]
-
 esp32:
   board: esp32-c3-devkitm-1     # adjust to your exact module/board if needed
   variant: esp32c3
@@ -87,6 +81,12 @@ custom_component:
       );
       ui->set_basic_auth("${ui_username}", "${ui_password}");
       return { ui };
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [aeroq_ui]
 
 # ─── Buses ─────────────────────────────────────────────────────────────────────
 
