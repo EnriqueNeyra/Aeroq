@@ -7,6 +7,7 @@ esphome:
     version: "1.0.0"
   includes:
     - src/aeroq_display.h
+    - src/aeroq_web.h
   platformio_options:
     lib_deps:
       - zinggjm/GxEPD2@^1.6.4
@@ -14,28 +15,32 @@ esphome:
       - adafruit/Adafruit BusIO@^1.17.4
     lib_ldf_mode: deep+
 
+
 esp32:
   board: esp32-c3-devkitm-1
   framework:
     type: arduino
     version: recommended
 
+
 wifi:
   ap:
-    # ssid: "Aeroq-Setup"
-    # No password for open AP
 captive_portal:
 improv_serial:
 
+
 logger:
+  level: INFO
 api:
 http_request:
   verify_ssl: false
+
 
 ota:
   - platform: esphome
   - platform: http_request
     id: ota_http
+
 
 update:
   - platform: http_request
@@ -43,6 +48,47 @@ update:
     name: "Aeroq Firmware"
     source: "https://enriqueneyra.github.io/Aeroq/manifest.json"
     update_interval: 24h
+
+
+mdns:
+  # Advertise aeroq.local and the HTTP service so most systems discover it
+  services:
+    - service: _http
+      protocol: _tcp
+      port: 80
+      txt: { path: "/" }
+
+
+web_server:
+  port: 80
+  auth:
+    username: admin
+    password: password
+  include_internal: true
+  version: 3
+  on_request:
+    - request: /
+      then:
+        - lambda: |-
+            aeroq::handle_root(request);
+
+    - request: /api/state
+      then:
+        - lambda: |-
+            aeroq::handle_state(request);
+
+    - request: /api/update/check
+      then:
+        - update.check: aeroq_fw_update
+        - lambda: |-
+            aeroq::handle_text(request, "Update check requested");
+
+    - request: /api/update/install
+      then:
+        - update.install: aeroq_fw_update
+        - lambda: |-
+            aeroq::handle_text(request, "Installing… device will reboot");
+
 
 # Your PCB wiring (C3 strapping-pin warnings are expected; safe on your board)
 i2c:

@@ -2,14 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Aeroq Firmware Installer</title>
+    <title>Aeroq • Factory Flash & Recovery</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Optional: nice clean font -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    />
+    <!-- Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"/>
 
     <style>
       :root {
@@ -26,165 +23,62 @@
         --radius-xl: 24px;
         --radius-lg: 999px;
       }
-
-      * {
-        box-sizing: border-box;
-      }
-
+      * { box-sizing: border-box; }
       body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
+        margin: 0; min-height: 100vh;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color: var(--text-main);
         background:
-          radial-gradient(circle at top left, rgba(70, 214, 183, 0.1), transparent 55%),
-          radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 55%),
+          radial-gradient(circle at top left, rgba(70,214,183,0.1), transparent 55%),
+          radial-gradient(circle at bottom right, rgba(56,189,248,0.08), transparent 55%),
           var(--bg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
+        display: flex; align-items: center; justify-content: center; padding: 24px;
       }
-
       .shell {
-        width: 100%;
-        max-width: 880px;
-        display: grid;
-        grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
-        gap: 32px;
-        padding: 32px;
-        border-radius: var(--radius-xl);
-        background: linear-gradient(
-              135deg,
-              rgba(15, 23, 42, 0.95),
-              rgba(15, 23, 42, 0.98)
-            ),
-          radial-gradient(circle at top right, rgba(148, 163, 184, 0.22), transparent 60%);
-        border: 1px solid var(--border-subtle);
-        box-shadow: var(--shadow-soft);
-        position: relative;
-        overflow: hidden;
+        width: 100%; max-width: 880px;
+        display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+        gap: 32px; padding: 32px; border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.98)),
+          radial-gradient(circle at top right, rgba(148,163,184,0.22), transparent 60%);
+        border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft);
+        position: relative; overflow: hidden;
       }
-
       .shell::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(
-          circle at top left,
-          var(--accent-soft),
-          transparent 55%
-        );
-        opacity: 0.6;
-        pointer-events: none;
+        content: ""; position: absolute; inset: 0;
+        background: radial-gradient(circle at top left, var(--accent-soft), transparent 55%);
+        opacity: 0.6; pointer-events: none;
       }
-
-      .shell-inner {
-        position: relative;
-        z-index: 1;
-        display: contents;
-      }
-
-      /* Left: text & actions */
-      .main {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
+      .shell-inner { position: relative; z-index: 1; display: contents; }
+      .main { display: flex; flex-direction: column; gap: 20px; }
       .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 4px 10px;
-        border-radius: var(--radius-lg);
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        color: var(--text-muted);
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 4px 10px; border-radius: var(--radius-lg);
+        background: rgba(15,23,42,0.9); border: 1px solid rgba(148,163,184,0.35);
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted);
       }
+      .eyebrow-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+      h1 { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: -0.03em; }
+      .subtitle { margin: 4px 0 0; font-size: 14px; color: var(--text-muted); }
 
-      .eyebrow-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--accent);
-        box-shadow: 0 0 0 4px var(--accent-soft);
+      .steps { margin-top: 12px; padding: 12px 14px; border-radius: 18px;
+        background: rgba(15,23,42,0.9); border: 1px solid rgba(148,163,184,0.3);
+        display: grid; gap: 4px; font-size: 12px; color: var(--text-muted);
       }
+      .steps strong { color: var(--text-main); }
 
-      h1 {
-        margin: 0;
-        font-size: 28px;
-        line-height: 1.1;
-        letter-spacing: -0.03em;
-      }
-
-      .subtitle {
-        margin: 4px 0 0;
-        font-size: 14px;
-        color: var(--text-muted);
-      }
-
-      .steps {
-        margin-top: 12px;
-        padding: 12px 14px;
-        border-radius: 18px;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        display: grid;
-        gap: 4px;
-        font-size: 12px;
-        color: var(--text-muted);
-      }
-
-      .steps strong {
-        color: var(--text-main);
-      }
-
-      .actions {
-        margin-top: 20px;
-        display: grid;
-        gap: 14px;
-      }
-
+      .actions { margin-top: 20px; display: grid; gap: 14px; }
       .action-card {
-        border-radius: 18px;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        padding: 14px 16px 16px;
-        display: grid;
-        gap: 10px;
+        border-radius: 18px; background: rgba(15,23,42,0.9);
+        border: 1px solid rgba(148,163,184,0.4);
+        padding: 14px 16px 16px; display: grid; gap: 10px;
       }
-
-      .action-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .action-title {
-        font-size: 14px;
-        font-weight: 600;
-      }
-
+      .action-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+      .action-title { font-size: 14px; font-weight: 600; }
       .badge {
-        font-size: 11px;
-        padding: 3px 9px;
-        border-radius: var(--radius-lg);
-        background: var(--accent-soft);
-        color: var(--accent);
-        border: 1px solid var(--accent-strong);
+        font-size: 11px; padding: 3px 9px; border-radius: var(--radius-lg);
+        background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-strong);
       }
-
-      .action-desc {
-        font-size: 12px;
-        color: var(--text-muted);
-      }
-
+      .action-desc { font-size: 12px; color: var(--text-muted); }
       esp-web-install-button {
         --esp-tools-button-background: var(--accent);
         --esp-tools-button-border-radius: 999px;
@@ -195,174 +89,45 @@
         --esp-tools-button-hover-background: #5ff0ce;
         --esp-tools-button-disabled-background: #4b5563;
       }
-
-      .notes {
-        margin-top: 12px;
-        font-size: 11px;
-        color: var(--text-muted);
+      .file-row { display: flex; gap: 10px; align-items: center; }
+      .file {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 8px 12px; border-radius: 12px;
+        background: rgba(15,23,42,0.9); border: 1px dashed rgba(148,163,184,0.35);
+        font-size: 12px; color: var(--text-muted);
       }
+      .notes { margin-top: 12px; font-size: 11px; color: var(--text-muted); }
 
-      /* Right: device card / visual */
+      /* Right visual */
       .device {
-        border-radius: 20px;
-        background: radial-gradient(
-            circle at top,
-            rgba(148, 163, 184, 0.18),
-            transparent 60%
-          ),
-          var(--bg-soft);
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        padding: 18px 18px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        position: relative;
-        overflow: hidden;
+        border-radius: 20px; background: radial-gradient(circle at top, rgba(148,163,184,0.18), transparent 60%), var(--bg-soft);
+        border: 1px solid rgba(148,163,184,0.4); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;
       }
-
-      .device-tag-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .device-tag {
-        font-size: 11px;
-        padding: 4px 10px;
-        border-radius: var(--radius-lg);
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(148, 163, 184, 0.45);
-        color: var(--text-muted);
-      }
-
-      .device-pill {
-        font-size: 11px;
-        padding: 3px 8px;
-        border-radius: var(--radius-lg);
-        background: rgba(5, 46, 22, 0.7);
-        border: 1px solid rgba(22, 163, 74, 0.8);
-        color: #bbf7d0;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .device-pill-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 999px;
-        background: #22c55e;
-        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22);
-      }
-
+      .device-tag-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .device-tag { font-size: 11px; padding: 4px 10px; border-radius: var(--radius-lg); background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.45); color: var(--text-muted); }
+      .device-pill { font-size: 11px; padding: 3px 8px; border-radius: var(--radius-lg); background: rgba(5,46,22,0.7); border: 1px solid rgba(22,163,74,0.8); color: #bbf7d0; display: inline-flex; align-items: center; gap: 6px; }
+      .device-pill-dot { width: 7px; height: 7px; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.22); }
       .device-screen {
-        margin-top: 4px;
-        border-radius: 16px;
-        background: #020617;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        padding: 14px 14px 12px;
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
-        gap: 10px;
-        font-size: 11px;
-        color: #e5e7eb;
+        margin-top: 4px; border-radius: 16px; background: #020617; border: 1px solid rgba(148,163,184,0.3);
+        padding: 14px 14px 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 10px; font-size: 11px; color: #e5e7eb;
       }
-
-      .display-col-main {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .display-heading {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        color: #6b7280;
-      }
-
-      .display-value-row {
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
-      }
-
-      .display-value {
-        font-size: 20px;
-        font-weight: 600;
-      }
-
-      .display-unit {
-        font-size: 11px;
-        color: #9ca3af;
-      }
-
-      .display-subgrid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px;
-      }
-
-      .display-chip {
-        padding: 6px 7px;
-        border-radius: 10px;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(55, 65, 81, 0.9);
-        display: grid;
-        gap: 2px;
-      }
-
-      .display-chip-label {
-        font-size: 9px;
-        text-transform: uppercase;
-        letter-spacing: 0.13em;
-        color: #6b7280;
-      }
-
-      .display-chip-value {
-        font-size: 11px;
-      }
-
-      .device-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 10px;
-        color: #9ca3af;
-        margin-top: 4px;
-      }
-
-      .device-footer span strong {
-        color: #e5e7eb;
-      }
-
-      .device-glow {
-        position: absolute;
-        inset: auto -80px -120px;
-        height: 220px;
-        background: radial-gradient(
-          circle at bottom,
-          rgba(56, 189, 248, 0.35),
-          transparent 60%
-        );
-        opacity: 0.3;
-        pointer-events: none;
-      }
+      .display-col-main { display: flex; flex-direction: column; gap: 6px; }
+      .display-heading { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: #6b7280; }
+      .display-value-row { display: flex; align-items: baseline; gap: 6px; }
+      .display-value { font-size: 20px; font-weight: 600; }
+      .display-unit { font-size: 11px; color: #9ca3af; }
+      .display-subgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+      .display-chip { padding: 6px 7px; border-radius: 10px; background: rgba(15,23,42,0.9); border: 1px solid rgba(55,65,81,0.9); display: grid; gap: 2px; }
+      .display-chip-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.13em; color: #6b7280; }
+      .display-chip-value { font-size: 11px; }
+      .device-footer { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #9ca3af; margin-top: 4px; }
+      .device-footer span strong { color: #e5e7eb; }
+      .device-glow { position: absolute; inset: auto -80px -120px; height: 220px; background: radial-gradient(circle at bottom, rgba(56,189,248,0.35), transparent 60%); opacity: 0.3; pointer-events: none; }
 
       @media (max-width: 768px) {
-        .shell {
-          grid-template-columns: minmax(0, 1fr);
-          padding: 22px 18px;
-        }
-
-        .device {
-          order: -1;
-        }
-
-        .steps {
-          font-size: 11px;
-        }
+        .shell { grid-template-columns: minmax(0, 1fr); padding: 22px 18px; }
+        .device { order: -1; }
+        .steps { font-size: 11px; }
       }
     </style>
   </head>
@@ -370,38 +135,37 @@
   <body>
     <div class="shell">
       <div class="shell-inner">
-        <!-- LEFT: Text & buttons -->
+        <!-- LEFT -->
         <section class="main">
           <div>
             <div class="eyebrow">
               <span class="eyebrow-dot"></span>
               <span>Firmware · Aeroq</span>
             </div>
-            <h1>Aeroq Firmware Installer</h1>
+            <h1>Factory Flash & Recovery</h1>
             <p class="subtitle">
-              Flash a brand-new device or safely update existing Aeroq monitors
-              without losing Wi-Fi or configuration.
+              Use this page to flash a brand-new PCB or recover a device over USB.
+              For routine updates, use the device’s local web UI or Home Assistant.
             </p>
 
             <div class="steps">
-              <div><strong>1.</strong> Connect your Aeroq via USB.</div>
-              <div><strong>2.</strong> Click the appropriate button below.</div>
-              <div><strong>3.</strong> Keep the window open until the process finishes.</div>
+              <div><strong>1.</strong> Connect your Aeroq to your computer via USB.</div>
+              <div><strong>2.</strong> Click one of the actions below.</div>
+              <div><strong>3.</strong> Keep this window open until flashing completes.</div>
             </div>
           </div>
 
           <div class="actions">
-            <!-- Factory flash -->
+            <!-- Factory flash from manifest -->
             <div class="action-card">
               <div class="action-header">
                 <div>
-                  <div class="action-title">Initial setup / factory flash</div>
+                  <div class="action-title">Factory flash (recommended)</div>
                   <div class="action-desc">
-                    For new or fully erased boards. Installs the Aeroq firmware,
-                    bootloader, and partition layout.
+                    Installs the latest Aeroq firmware, bootloader & partition layout.
                   </div>
                 </div>
-                <div class="badge">Fresh devices</div>
+                <div class="badge">Fresh / Erased</div>
               </div>
 
               <esp-web-install-button manifest="manifest.json">
@@ -409,38 +173,40 @@
               </esp-web-install-button>
             </div>
 
-            <!-- OTA update -->
+            <!-- Manual .bin file -->
             <div class="action-card">
               <div class="action-header">
                 <div>
-                  <div class="action-title">Update existing Aeroq</div>
+                  <div class="action-title">Manual .bin (advanced)</div>
                   <div class="action-desc">
-                    Keeps your Wi-Fi and settings. Recommended for devices
-                    already running Aeroq firmware.
+                    Flash a specific firmware binary from your computer. Use if support
+                    gave you a test build or you need to pin a version.
                   </div>
                 </div>
-                <div class="badge">Safe update</div>
+                <div class="badge">Recovery</div>
               </div>
 
-              <esp-web-install-button manifest="manifest.json#ota">
-                Update to latest version
-              </esp-web-install-button>
+              <!-- Many Chromium browsers support selecting a local .bin with esp-web-tools -->
+              <div class="file-row">
+                <esp-web-install-button install-file>
+                  Choose .bin and flash
+                </esp-web-install-button>
+              </div>
             </div>
           </div>
 
           <div class="notes">
-            Works best in Chrome, Edge, or other Chromium-based browsers with
-            WebUSB support. Don’t unplug your device during flashing.
+            Works best in Chrome/Edge (WebUSB). Don’t unplug the device during flashing.
+            If your board has a BOOT/EN combo, you may be prompted to hold BOOT and tap EN.
           </div>
         </section>
 
-        <!-- RIGHT: Device visualization -->
+        <!-- RIGHT visual -->
         <aside class="device" aria-hidden="true">
           <div class="device-tag-row">
             <div class="device-tag">Aeroq · Air quality monitor</div>
             <div class="device-pill">
-              <span class="device-pill-dot"></span>
-              <span>Device ready</span>
+              <span class="device-pill-dot"></span><span>USB connected</span>
             </div>
           </div>
 
@@ -452,42 +218,23 @@
                 <div class="display-unit">ppm</div>
               </div>
               <div class="display-subgrid">
-                <div class="display-chip">
-                  <div class="display-chip-label">Temp</div>
-                  <div class="display-chip-value">22.4 °C</div>
-                </div>
-                <div class="display-chip">
-                  <div class="display-chip-label">Humidity</div>
-                  <div class="display-chip-value">47 %</div>
-                </div>
+                <div class="display-chip"><div class="display-chip-label">Temp</div><div class="display-chip-value">22.4 °C</div></div>
+                <div class="display-chip"><div class="display-chip-label">Humidity</div><div class="display-chip-value">47 %</div></div>
               </div>
             </div>
-
             <div class="display-col-main">
               <div class="display-heading">Particulates</div>
               <div class="display-subgrid">
-                <div class="display-chip">
-                  <div class="display-chip-label">PM 2.5</div>
-                  <div class="display-chip-value">8 µg/m³</div>
-                </div>
-                <div class="display-chip">
-                  <div class="display-chip-label">PM 10</div>
-                  <div class="display-chip-value">12 µg/m³</div>
-                </div>
-                <div class="display-chip">
-                  <div class="display-chip-label">VOC Index</div>
-                  <div class="display-chip-value">89 · Good</div>
-                </div>
-                <div class="display-chip">
-                  <div class="display-chip-label">Status</div>
-                  <div class="display-chip-value">Healthy indoor air</div>
-                </div>
+                <div class="display-chip"><div class="display-chip-label">PM 2.5</div><div class="display-chip-value">8 µg/m³</div></div>
+                <div class="display-chip"><div class="display-chip-label">PM 10</div><div class="display-chip-value">12 µg/m³</div></div>
+                <div class="display-chip"><div class="display-chip-label">VOC Index</div><div class="display-chip-value">89 · Good</div></div>
+                <div class="display-chip"><div class="display-chip-label">Status</div><div class="display-chip-value">Healthy indoor air</div></div>
               </div>
             </div>
           </div>
 
           <div class="device-footer">
-            <span>Firmware: <strong>v1.0.0</strong></span>
+            <span>Mode: <strong>Flash/Recovery</strong></span>
             <span>ESP32-C3 · USB-C · E-paper</span>
           </div>
 
@@ -497,9 +244,6 @@
     </div>
 
     <!-- ESP Web Tools -->
-    <script
-      type="module"
-      src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"
-    ></script>
+    <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
   </body>
 </html>
