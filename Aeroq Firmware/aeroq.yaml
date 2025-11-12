@@ -1,46 +1,49 @@
+substitutions:
+  fw_version: "1.0.0"          # bump per release
+  ui_username: "admin"
+  ui_password: "password"         # change for production
+  device_name: "aeroq"
+
 esphome:
-  name: aeroq
+  name: ${device_name}
   name_add_mac_suffix: true
   friendly_name: Aeroq Air Monitor
   project:
     name: "neyra.aeroq"
-    version: "1.0.0"
+    version: ${fw_version}
   includes:
-    - src/aeroq_display.h
-    - src/aeroq_web.h
+    - components/aeroq_display/aeroq_display.h       # your e-paper rendering header
   platformio_options:
+    lib_ldf_mode: deep+
     lib_deps:
       - zinggjm/GxEPD2@^1.6.4
       - adafruit/Adafruit GFX Library@^1.12.3
-      - adafruit/Adafruit BusIO@^1.17.4
-    lib_ldf_mode: deep+
+      - adafruit/Adafruit BusIO@^1.15.0
 
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [aeroq_ui]
 
 esp32:
-  board: esp32-c3-devkitm-1
+  board: esp32-c3-devkitm-1     # adjust to your exact module/board if needed
+  variant: esp32c3
   framework:
     type: arduino
-    version: recommended
-
-
-wifi:
-  ap:
-captive_portal:
-improv_serial:
-
 
 logger:
   level: INFO
-api:
-http_request:
-  verify_ssl: false
 
+api:
 
 ota:
   - platform: esphome
   - platform: http_request
     id: ota_http
 
+http_request:
+  verify_ssl: false             # required on Arduino framework for HTTPS
 
 update:
   - platform: http_request
@@ -48,81 +51,147 @@ update:
     name: "Aeroq Firmware"
     source: "https://enriqueneyra.github.io/Aeroq/manifest.json"
     update_interval: 24h
+    # auto_install: true        # uncomment if you want silent auto-updates
 
+wifi:
+  ap:
+captive_portal:
+improv_serial:
 
 mdns:
-  # Advertise aeroq.local and the HTTP service so most systems discover it
   services:
     - service: _http
       protocol: _tcp
       port: 80
       txt: { path: "/" }
 
-
 web_server:
   port: 80
-  auth:
-    username: admin
-    password: password
-  include_internal: true
   version: 3
-  on_request:
-    - request: /
-      then:
-        - lambda: |-
-            aeroq::handle_root(request);
+  local: true
+  include_internal: true
+  auth:
+    username: ${ui_username}
+    password: ${ui_password}
 
-    - request: /api/state
-      then:
-        - lambda: |-
-            aeroq::handle_state(request);
+custom_component:
+  - lambda: |-
+      auto *ui = new aeroq::AeroqUI(
+        &id(co2),
+        &id(pm2_5),
+        &id(t_scd),  &id(rh_scd),
+        &id(t_sen),  &id(rh_sen),
+        &id(pm1_0),  &id(pm4_0), &id(pm10_0),
+        &id(voc_index),
+        &id(aeroq_fw_update)
+      );
+      ui->set_basic_auth("${ui_username}", "${ui_password}");
+      return { ui };
 
-    - request: /api/update/check
-      then:
-        - update.check: aeroq_fw_update
-        - lambda: |-
-            aeroq::handle_text(request, "Update check requested");
+# ─── Buses ─────────────────────────────────────────────────────────────────────
 
-    - request: /api/update/install
-      then:
-        - update.install: aeroq_fw_update
-        - lambda: |-
-            aeroq::handle_text(request, "Installing… device will reboot");
-
-
-# Your PCB wiring (C3 strapping-pin warnings are expected; safe on your board)
 i2c:
-  sda: 8
-  scl: 0
+  sda: 8                        # your hardware uses SDA=8, SCL=9
+  scl: 9
   scan: true
 
-sensor:
-  - platform: scd4x
-    id: scd41
-    co2:         { name: "CO2", id: co2, accuracy_decimals: 0 }
-    temperature: { name: "Temp (SCD41)", id: t_scd, accuracy_decimals: 1 }
-    humidity:    { name: "RH (SCD41)",   id: rh_scd, accuracy_decimals: 1 }
-    update_interval: 10s
+# ─── Sensors (IDs used by display + web UI) ───────────────────────────────────
 
-  - platform: sen5x
-    pm_1_0:      { name: "PM1.0", id: pm1_0, accuracy_decimals: 1 }
-    pm_2_5:      { name: "PM2.5", id: pm2_5, accuracy_decimals: 1 }
-    pm_4_0:      { name: "PM4.0", id: pm4_0, accuracy_decimals: 1 }
-    pm_10_0:     { name: "PM10",  id: pm10_0, accuracy_decimals: 1 }
-    voc:         { name: "VOC Index", id: voc_index, accuracy_decimals: 0 }
-    temperature: { name: "Temp (SEN54)", id: t_sen, accuracy_decimals: 1 }
-    humidity:    { name: "RH (SEN54)",   id: rh_sen, accuracy_decimals: 1 }
+sensor:
+  # SCD4x (CO2 / Temp / RH)
+  - platform: scd4x
+    address: 0x62
     update_interval: 10s
+    co2:
+      id: co2
+      name: "CO₂"
+      web_server:
+        sorting_group_id: grp_main
+        sorting_weight: -10
+    temperature:
+      id: t_scd
+      name: "Temperature (SCD)"
+      accuracy_decimals: 1
+      web_server:
+        sorting_group_id: grp_main
+    humidity:
+      id: rh_scd
+      name: "Humidity (SCD)"
+      accuracy_decimals: 0
+      web_server:
+        sorting_group_id: grp_main
+
+  # SEN54 (PM / VOC / Temp / RH)
+  - platform: sen5x
+    update_interval: 10s
+    pm_1_0:
+      id: pm1_0
+      name: "PM1.0"
+      web_server:
+        sorting_group_id: grp_system
+    pm_2_5:
+      id: pm2_5
+      name: "PM2.5"
+      web_server:
+        sorting_group_id: grp_main
+        sorting_weight: -9
+    pm_4_0:
+      id: pm4_0
+      name: "PM4.0"
+      web_server:
+        sorting_group_id: grp_system
+    pm_10_0:
+      id: pm10_0
+      name: "PM10"
+      web_server:
+        sorting_group_id: grp_system
+    voc:
+      id: voc_index
+      name: "VOC Index"
+      web_server:
+        sorting_group_id: grp_main
+    temperature:
+      id: t_sen
+      name: "Temperature (SEN)"
+      web_server:
+        sorting_group_id: grp_system
+    humidity:
+      id: rh_sen
+      name: "Humidity (SEN)"
+      web_server:
+        sorting_group_id: grp_system
+  
+# ── Aeroq custom UI component (external) ───────────────────────────────────────
+aeroq_ui:
+  username: ${ui_username}
+  password: ${ui_password}
+  co2: co2
+  pm25: pm2_5
+  t_scd: t_scd
+  rh_scd: rh_scd
+  t_sen: t_sen
+  rh_sen: rh_sen
+  pm1: pm1_0
+  pm4: pm4_0
+  pm10: pm10_0
+  voc: voc_index
+  update: aeroq_fw_update
+
+# ─── Main UI / E-paper render loop ────────────────────────────────────────────
 
 interval:
   - interval: 5s
     then:
       - lambda: |-
           aeroq_display::tick_and_draw(
-            (uint16_t) id(co2).state,
-            id(t_scd).state, id(rh_scd).state,
-            id(t_sen).state, id(rh_sen).state,
-            id(pm1_0).state, id(pm2_5).state,
-            id(pm4_0).state, id(pm10_0).state,
-            id(voc_index).state
+            (uint16_t)(isnan(id(co2).state)   ? 0 : id(co2).state),
+            isnan(id(t_scd).state)            ? 0 : id(t_scd).state,
+            isnan(id(rh_scd).state)           ? 0 : id(rh_scd).state,
+            isnan(id(t_sen).state)            ? 0 : id(t_sen).state,
+            isnan(id(rh_sen).state)           ? 0 : id(rh_sen).state,
+            isnan(id(pm1_0).state)            ? 0 : id(pm1_0).state,
+            isnan(id(pm2_5).state)            ? 0 : id(pm2_5).state,
+            isnan(id(pm4_0).state)            ? 0 : id(pm4_0).state,
+            isnan(id(pm10_0).state)           ? 0 : id(pm10_0).state,
+            isnan(id(voc_index).state)        ? 0 : id(voc_index).state
           );

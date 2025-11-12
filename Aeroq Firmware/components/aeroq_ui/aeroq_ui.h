@@ -1,35 +1,99 @@
-// src/aeroq_web.h
+// src/aeroq_ui.h
 #pragma once
-#include "esphome.h"
+
+#include "esphome/core/component.h"
+#include "esphome/components/web_server_base/web_server_base.h"
+#include "esphome/components/update/update.h"
 
 #ifndef APP_VERSION
 #define APP_VERSION ESPHOME_PROJECT_VERSION
 #endif
 
 namespace aeroq {
-using Request = esphome::web_server_base::Request;
 
-inline void handle_text(Request *request, const std::string &text) {
-  request->send(200, "text/plain", text.c_str());
-}
+using esphome::Component;
+using esphome::web_server_base::Request;
+using WebServer = esphome::web_server_base::WebServer;
 
-inline void handle_state(Request *request) {
-  // Use your real IDs (as in your YAML and display code)
-  const float co2   = isnan(id(co2).state)    ? 0.0f : id(co2).state;
-  const float pm25  = isnan(id(pm2_5).state)  ? 0.0f : id(pm2_5).state;
-  const float temp  = isnan(id(t_sen).state)  ? 0.0f : id(t_scd).state;
-  const float hum   = isnan(id(rh_sen).state) ? 0.0f : id(rh_scd).state;
+class AeroqUI final : public Component {
+ public:
+  AeroqUI(esphome::sensor::Sensor *co2,
+          esphome::sensor::Sensor *pm25,
+          esphome::sensor::Sensor *temp_pref,
+          esphome::sensor::Sensor *hum_pref,
+          esphome::update::UpdateComponent *up)
+      : co2_(co2), pm25_(pm25), temp_(temp_pref), hum_(hum_pref), update_(up) {}
 
-  char json[512];
-  snprintf(json, sizeof(json),
-           "{\"co2\":%.1f,\"pm25\":%.1f,\"temp\":%.2f,\"hum\":%.1f,"
-           "\"fw\":\"%s\",\"build\":\"%s\"}",
-           co2, pm25, temp, hum, ESPHOME_PROJECT_VERSION, APP_VERSION);
-  request->send(200, "application/json", json);
-}
+  void set_basic_auth(const std::string &user, const std::string &pass) {
+    user_ = user; pass_ = pass;
+  }
 
-inline void handle_root(Request *request) {
-  request->send(200, "text/html", R"HTML(<!doctype html>
+  void setup() override {
+    auto *ws = esphome::web_server_base::global_web_server;
+    if (!ws) return;
+
+    // Root UI
+    ws->on("/", HTTP_GET, [this](Request *req) {
+      if (!this->check_auth_(req)) return;
+      req->send_P(200, "text/html", INDEX_HTML, strlen_P(INDEX_HTML));
+    });
+
+    // JSON state
+    ws->on("/api/state", HTTP_GET, [this](Request *req) {
+      if (!this->check_auth_(req)) return;
+      char json[512];
+      const float co2 = safe_(co2_), pm  = safe_(pm25_), t = safe_(temp_), h = safe_(hum_);
+      snprintf(json, sizeof(json),
+        "{\"co2\":%.1f,\"pm25\":%.1f,\"temp\":%.2f,\"hum\":%.1f,"
+        "\"fw\":\"%s\",\"build\":\"%s\"}",
+        co2, pm, t, h, ESPHOME_PROJECT_VERSION, APP_VERSION);
+      req->send(200, "application/json", json);
+    });
+
+    // Update check/install
+    ws->on("/api/update/check", HTTP_POST, [this](Request *req) {
+      if (!this->check_auth_(req)) return;
+      if (update_) update_->check();
+      req->send(200, "text/plain", "Update check requested");
+    });
+
+    ws->on("/api/update/install", HTTP_POST, [this](Request *req) {
+      if (!this->check_auth_(req)) return;
+      if (update_) update_->install();
+      req->send(200, "text/plain", "Installing… device will reboot");
+    });
+  }
+
+  void loop() override {}
+
+ private:
+  esphome::sensor::Sensor *co2_{nullptr};
+  esphome::sensor::Sensor *pm25_{nullptr};
+  esphome::sensor::Sensor *temp_{nullptr};
+  esphome::sensor::Sensor *hum_{nullptr};
+  esphome::update::UpdateComponent *update_{nullptr};
+
+  std::string user_, pass_;
+
+  static float safe_(esphome::sensor::Sensor *s) {
+    if (!s) return 0.0f;
+    const float v = s->state;
+    return std::isnan(v) ? 0.0f : v;
+  }
+
+  bool check_auth_(Request *req) {
+    if (user_.empty()) return true;  // no auth configured
+    if (req->authenticate(user_.c_str(), pass_.c_str())) return true;
+    req->requestAuthentication("Aeroq");
+    return false;
+  }
+
+  // Keep the UI small and embedded (no filesystem needed)
+  static const char INDEX_HTML[] PROGMEM;
+};
+
+// ================= HTML (inline) =================
+const char AeroqUI::INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -121,17 +185,21 @@ async function fetchState(){
 function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
 
 document.getElementById('btnCheck').addEventListener('click', async ()=>{
-  set('msg','Checking...'); const r = await fetch('/api/update/check'); set('msg', await r.text());
+  set('msg','Checking...');
+  await fetch('/api/update/check', { method: 'POST' });
+  set('msg','Update check requested');
   document.getElementById('btnInstall').disabled = false;
 });
 document.getElementById('btnInstall').addEventListener('click', async ()=>{
   document.getElementById('btnInstall').disabled = true;
-  set('msg','Installing... device will reboot'); await fetch('/api/update/install');
+  set('msg','Installing... device will reboot');
+  await fetch('/api/update/install', { method: 'POST' });
 });
 
 fetchState(); setInterval(fetchState, 2000);
 </script>
-</body></html>)HTML");
-}
+</body></html>)HTML";
 
-} // namespace aeroq
+}  // class AeroqUI
+
+}  // namespace aeroq
