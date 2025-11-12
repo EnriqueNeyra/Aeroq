@@ -66,21 +66,7 @@ web_server:
   include_internal: true
   auth:
     username: ${ui_username}
-    password: ${ui_password}
-
-custom_component:
-  - lambda: |-
-      auto *ui = new aeroq::AeroqUI(
-        &id(co2),
-        &id(pm2_5),
-        &id(t_scd),  &id(rh_scd),
-        &id(t_sen),  &id(rh_sen),
-        &id(pm1_0),  &id(pm4_0), &id(pm10_0),
-        &id(voc_index),
-        &id(aeroq_fw_update)
-      );
-      ui->set_basic_auth("${ui_username}", "${ui_password}");
-      return { ui };
+    password: ${ui_password}x
 
 external_components:
   - source:
@@ -105,21 +91,14 @@ sensor:
     co2:
       id: co2
       name: "CO₂"
-      web_server:
-        sorting_group_id: grp_main
-        sorting_weight: -10
     temperature:
       id: t_scd
       name: "Temperature (SCD)"
       accuracy_decimals: 1
-      web_server:
-        sorting_group_id: grp_main
     humidity:
       id: rh_scd
       name: "Humidity (SCD)"
       accuracy_decimals: 0
-      web_server:
-        sorting_group_id: grp_main
 
   # SEN54 (PM / VOC / Temp / RH)
   - platform: sen5x
@@ -127,39 +106,24 @@ sensor:
     pm_1_0:
       id: pm1_0
       name: "PM1.0"
-      web_server:
-        sorting_group_id: grp_system
     pm_2_5:
       id: pm2_5
       name: "PM2.5"
-      web_server:
-        sorting_group_id: grp_main
-        sorting_weight: -9
     pm_4_0:
       id: pm4_0
       name: "PM4.0"
-      web_server:
-        sorting_group_id: grp_system
     pm_10_0:
       id: pm10_0
       name: "PM10"
-      web_server:
-        sorting_group_id: grp_system
     voc:
       id: voc_index
       name: "VOC Index"
-      web_server:
-        sorting_group_id: grp_main
     temperature:
       id: t_sen
       name: "Temperature (SEN)"
-      web_server:
-        sorting_group_id: grp_system
     humidity:
       id: rh_sen
       name: "Humidity (SEN)"
-      web_server:
-        sorting_group_id: grp_system
   
 # ── Aeroq custom UI component (external) ───────────────────────────────────────
 aeroq_ui:

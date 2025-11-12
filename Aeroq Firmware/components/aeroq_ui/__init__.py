@@ -1,13 +1,15 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.const import CONF_ID, CONF_USERNAME, CONF_PASSWORD
-from esphome.components import sensor, update, web_server_base
+from esphome.const import CONF_ID
+from esphome.components import sensor, web_server_base
 
 AUTO_LOAD = ["web_server_base"]
 
 aeroq_ns = cg.esphome_ns.namespace("aeroq")
 AeroqUI = aeroq_ns.class_("AeroqUI", cg.Component)
 
+CONF_USERNAME = "username"
+CONF_PASSWORD = "password"
 CONF_CO2 = "co2"
 CONF_PM25 = "pm25"
 CONF_T_SCD = "t_scd"
@@ -20,39 +22,55 @@ CONF_PM10 = "pm10"
 CONF_VOC = "voc"
 CONF_UPDATE = "update"
 
-CONFIG_SCHEMA = cv.Schema({
-    cv.GenerateID(): cv.declare_id(AeroqUI),
-    cv.Optional(CONF_USERNAME, default=""): cv.string,
-    cv.Optional(CONF_PASSWORD, default=""): cv.string,
-    cv.Required(CONF_CO2): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_PM25): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_T_SCD): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_RH_SCD): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_T_SEN): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_RH_SEN): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_PM1): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_PM4): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_PM10): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_VOC): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_UPDATE): cv.use_id(update.UpdateComponent),
-}).extend(cv.COMPONENT_SCHEMA)
+CONFIG_SCHEMA = cv.Schema(
+    {
+        cv.GenerateID(CONF_ID): cv.declare_id(AeroqUI),
+
+        cv.Optional(CONF_USERNAME, default=""): cv.string,
+        cv.Optional(CONF_PASSWORD, default=""): cv.string,
+
+        cv.Required(CONF_CO2): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_PM25): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_T_SCD): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_RH_SCD): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_T_SEN): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_RH_SEN): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_PM1): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_PM4): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_PM10): cv.use_id(sensor.Sensor),
+        cv.Required(CONF_VOC): cv.use_id(sensor.Sensor),
+
+        # we accept a generic Component* here and cast it in C++
+        cv.Required(CONF_UPDATE): cv.use_id(cg.Component),
+    }
+).extend(cv.COMPONENT_SCHEMA)
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    co2   = await cg.get_variable(config[CONF_CO2])
-    pm25  = await cg.get_variable(config[CONF_PM25])
-    t_scd = await cg.get_variable(config[CONF_T_SCD])
-    rh_scd= await cg.get_variable(config[CONF_RH_SCD])
-    t_sen = await cg.get_variable(config[CONF_T_SEN])
-    rh_sen= await cg.get_variable(config[CONF_RH_SEN])
-    pm1   = await cg.get_variable(config[CONF_PM1])
-    pm4   = await cg.get_variable(config[CONF_PM4])
-    pm10  = await cg.get_variable(config[CONF_PM10])
-    voc   = await cg.get_variable(config[CONF_VOC])
-    up    = await cg.get_variable(config[CONF_UPDATE])
+    # Wire up all sensor pointers → calls set_co2, set_pm25, etc. in C++
+    for key in [
+        CONF_CO2,
+        CONF_PM25,
+        CONF_T_SCD,
+        CONF_RH_SCD,
+        CONF_T_SEN,
+        CONF_RH_SEN,
+        CONF_PM1,
+        CONF_PM4,
+        CONF_PM10,
+        CONF_VOC,
+    ]:
+        s = await cg.get_variable(config[key])
+        cg.add(getattr(var, f"set_{key}")(s))
 
-    cg.add(var.set_sensors(co2, pm25, t_scd, rh_scd, t_sen, rh_sen, pm1, pm4, pm10, voc))
+    # Update component (generic Component*, cast in C++)
+    up = await cg.get_variable(config[CONF_UPDATE])
     cg.add(var.set_update(up))
-    cg.add(var.set_basic_auth(config[CONF_USERNAME], config[CONF_PASSWORD]))
+
+    # Basic auth for the UI
+    username = config.get(CONF_USERNAME, "")
+    password = config.get(CONF_PASSWORD, "")
+    cg.add(var.set_basic_auth(username, password))
