@@ -1,3 +1,4 @@
 .pio
 .esphome
 .vscode
+__pycache__/
