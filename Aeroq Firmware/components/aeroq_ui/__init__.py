@@ -20,7 +20,6 @@ CONF_PM1 = "pm1"
 CONF_PM4 = "pm4"
 CONF_PM10 = "pm10"
 CONF_VOC = "voc"
-CONF_UPDATE = "update"
 
 CONFIG_SCHEMA = cv.Schema(
     {
@@ -39,9 +38,6 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Required(CONF_PM4): cv.use_id(sensor.Sensor),
         cv.Required(CONF_PM10): cv.use_id(sensor.Sensor),
         cv.Required(CONF_VOC): cv.use_id(sensor.Sensor),
-
-        # we accept a generic Component* here and cast it in C++
-        cv.Required(CONF_UPDATE): cv.use_id(cg.Component),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -65,10 +61,6 @@ async def to_code(config):
     ]:
         s = await cg.get_variable(config[key])
         cg.add(getattr(var, f"set_{key}")(s))
-
-    # Update component (generic Component*, cast in C++)
-    up = await cg.get_variable(config[CONF_UPDATE])
-    cg.add(var.set_update(up))
 
     # Basic auth for the UI
     username = config.get(CONF_USERNAME, "")

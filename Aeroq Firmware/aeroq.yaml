@@ -139,7 +139,6 @@ aeroq_ui:
   pm4: pm4_0
   pm10: pm10_0
   voc: voc_index
-  update: aeroq_fw_update
 
 # ─── Main UI / E-paper render loop ────────────────────────────────────────────
 

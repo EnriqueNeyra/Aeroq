@@ -1,324 +1,490 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/web_server_base/web_server_base.h"
-#include "esphome/components/update/update.h"
-#include <cmath>
+#include "esphome/components/sensor/sensor.h"
 
-#ifndef APP_VERSION
-#define APP_VERSION ESPHOME_PROJECT_VERSION
-#endif
+#include <string>
+#include <cmath>
 
 namespace aeroq {
 
-using esphome::Component;
-using esphome::web_server_base::Request;
-using WebServer = esphome::web_server_base::WebServer;
+using esphome::sensor::Sensor;
 
-// ============================================================================
-//                               AeroqUI Component
-// ============================================================================
-class AeroqUI : public Component {
+static const char *const TAG = "aeroq_ui";
+
+// Minimal-but-modern HTML UI; you can tweak styling later.
+static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aeroq Air Quality Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #05060a;
+      --card-bg: #111319;
+      --accent: #00e0b8;
+      --accent-soft: rgba(0, 224, 184, 0.12);
+      --text-main: #f5f7ff;
+      --text-muted: #9aa0b7;
+      --border: #222633;
+      --radius-lg: 18px;
+      --radius-md: 10px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.45);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #171b2c 0, #05060a 55%);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+    .shell {
+      width: 100%;
+      max-width: 960px;
+      padding: 24px;
+    }
+    .frame {
+      background: radial-gradient(circle at top left, #252b3d 0, #111319 50%);
+      border-radius: 24px;
+      padding: 22px 22px 20px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(22px);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .title-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pill {
+      width: 11px;
+      height: 32px;
+      border-radius: 50px;
+      background: linear-gradient(180deg, var(--accent), #0c8b74);
+      box-shadow: 0 0 12px rgba(0, 224, 184, 0.65);
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 650;
+    }
+    .subtitle {
+      margin: 0;
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .status-chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 224, 184, 0.09);
+      border: 1px solid rgba(0, 224, 184, 0.5);
+      color: var(--accent);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 224, 184, 0.9);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 16px 16px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d8ddff;
+    }
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .metric {
+      background: radial-gradient(circle at top, #232636 0, #151722 45%);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 8px 10px;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .metric-main {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .metric-value {
+      font-size: 18px;
+      font-weight: 620;
+    }
+    .metric-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.18);
+      color: var(--text-muted);
+    }
+
+    .firmware-card {
+      background: radial-gradient(circle at top, #1d1523 0, #151220 45%);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 16px 16px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .firmware-card::before {
+      content: "";
+      position: absolute;
+      inset: -80px;
+      background: radial-gradient(circle at top right, rgba(0,224,184,0.16) 0, transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .firmware-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .fw-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .fw-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .fw-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .fw-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      max-width: 260px;
+    }
+
+    .fw-status {
+      font-size: 11px;
+      margin-top: 6px;
+      color: var(--text-muted);
+    }
+
+    .footer {
+      margin-top: 14px;
+      display: flex;
+      justify-content: flex-end;
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    @media (max-width: 720px) {
+      .frame {
+        padding: 18px 16px 16px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="frame">
+      <div class="header">
+        <div class="title-block">
+          <div class="pill"></div>
+          <div>
+            <h1>Aeroq</h1>
+            <p class="subtitle">Local live view · Air quality telemetry</p>
+          </div>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          <span id="status-text">Live</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Environment</div>
+              <div class="card-subtitle">Live sensor snapshot</div>
+            </div>
+          </div>
+          <div class="metrics-grid" id="metrics"></div>
+          <div class="chip-row">
+            <div class="chip" id="chip-last-updated">Last updated: —</div>
+          </div>
+        </div>
+
+        <div class="firmware-card">
+          <div class="firmware-inner">
+            <div class="fw-pill">
+              <div class="fw-pill-dot"></div>
+              <span>Firmware</span>
+            </div>
+            <div class="fw-title">Browser view only</div>
+            <div class="fw-sub">
+              OTA uploads are handled by your main tooling for now. This panel is just a local status view.
+            </div>
+            <div class="fw-status" id="fw-status">
+              Ready on <strong>aeroq.local</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span id="footer-ip">Device: aeroq.local</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const metricsEl = document.getElementById('metrics');
+    const lastUpdatedChip = document.getElementById('chip-last-updated');
+    const statusText = document.getElementById('status-text');
+
+    function formatNumber(v, digits = 1) {
+      if (v === null || v === undefined || Number.isNaN(v)) return '—';
+      return Number(v).toFixed(digits);
+    }
+
+    function renderMetrics(data) {
+      const items = [
+        { key: 'co2', label: 'CO\u2082', unit: 'ppm' },
+        { key: 't_scd', label: 'Temp (SCD41)', unit: '°C' },
+        { key: 'rh_scd', label: 'RH (SCD41)', unit: '%' },
+        { key: 't_sen', label: 'Temp (SEN54)', unit: '°C' },
+        { key: 'rh_sen', label: 'RH (SEN54)', unit: '%' },
+        { key: 'pm1', label: 'PM1.0', unit: 'µg/m³' },
+        { key: 'pm25', label: 'PM2.5', unit: 'µg/m³' },
+        { key: 'pm4', label: 'PM4.0', unit: 'µg/m³' },
+        { key: 'pm10', label: 'PM10', unit: 'µg/m³' },
+        { key: 'voc', label: 'VOC Index', unit: '' }
+      ];
+
+      metricsEl.innerHTML = items.map(m => {
+        const raw = data[m.key];
+        const val = m.key.startsWith('pm') || m.key === 'voc'
+          ? formatNumber(raw, 0)
+          : formatNumber(raw, 1);
+        return `
+          <div class="metric">
+            <div class="metric-label">${m.label}</div>
+            <div class="metric-main">
+              <div class="metric-value">${val}</div>
+              <div class="metric-unit">${m.unit}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const now = new Date();
+      lastUpdatedChip.textContent =
+        'Last updated: ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    async function pollState() {
+      try {
+        const res = await fetch('/api/state', { cache: 'no-store' });
+        if (!res.ok) throw new Error('bad status');
+        const json = await res.json();
+        renderMetrics(json);
+        statusText.textContent = 'Live';
+      } catch (e) {
+        statusText.textContent = 'Offline?';
+      }
+    }
+
+    setInterval(pollState, 5000);
+    pollState();
+  </script>
+</body>
+</html>)HTML";
+
+class AeroqUI : public esphome::Component, public AsyncWebHandler {
  public:
-  // --- Setters for each required sensor ID (called from Python shim) --------
-  void set_co2(esphome::sensor::Sensor *s)      { co2_ = s; }
-  void set_pm25(esphome::sensor::Sensor *s)     { pm25_ = s; }
-  void set_t_scd(esphome::sensor::Sensor *s)    { t_scd_ = s; }
-  void set_rh_scd(esphome::sensor::Sensor *s)   { rh_scd_ = s; }
-  void set_t_sen(esphome::sensor::Sensor *s)    { t_sen_ = s; }
-  void set_rh_sen(esphome::sensor::Sensor *s)   { rh_sen_ = s; }
-  void set_pm1(esphome::sensor::Sensor *s)      { pm1_ = s; }
-  void set_pm4(esphome::sensor::Sensor *s)      { pm4_ = s; }
-  void set_pm10(esphome::sensor::Sensor *s)     { pm10_ = s; }
-  void set_voc(esphome::sensor::Sensor *s)      { voc_ = s; }
-
-  // Generic setter: ESPHome gives us a Component* → cast to UpdateComponent*
-  void set_update(esphome::Component *c) {
-    update_ = dynamic_cast<esphome::update::UpdateComponent *>(c);
-  }
-
+  // matches what main.cpp + Python shim expect
   void set_basic_auth(const std::string &u, const std::string &p) {
     user_ = u;
     pass_ = p;
   }
 
-  // ============================================================================
-  //                                     SETUP
-  // ============================================================================
+  void set_co2(Sensor *s)    { co2_ = s; }
+  void set_pm25(Sensor *s)   { pm25_ = s; }
+  void set_t_scd(Sensor *s)  { t_scd_ = s; }
+  void set_rh_scd(Sensor *s) { rh_scd_ = s; }
+  void set_t_sen(Sensor *s)  { t_sen_ = s; }
+  void set_rh_sen(Sensor *s) { rh_sen_ = s; }
+  void set_pm1(Sensor *s)    { pm1_ = s; }
+  void set_pm4(Sensor *s)    { pm4_ = s; }
+  void set_pm10(Sensor *s)   { pm10_ = s; }
+  void set_voc(Sensor *s)    { voc_ = s; }
+
   void setup() override {
-    auto *ws = esphome::web_server_base::global_web_server;
-    if (!ws) return;
-
-    // --- Serve the custom UI at "/" -----------------------------------------
-    ws->on("/", HTTP_GET, [this](Request *req) {
-      if (!this->check_auth_(req)) return;
-      req->send_P(200, "text/html", INDEX_HTML, strlen_P(INDEX_HTML));
-    });
-
-    // --- Live JSON state -----------------------------------------------------
-    ws->on("/api/state", HTTP_GET, [this](Request *req) {
-      if (!this->check_auth_(req)) return;
-
-      auto f = [](esphome::sensor::Sensor *s) {
-        if (!s) return 0.0f;
-        float v = s->state;
-        return (std::isnan(v) ? 0.0f : v);
-      };
-
-      char json[896];
-      snprintf(json, sizeof(json),
-        "{\"co2\":%.1f,"
-         "\"scd_temp\":%.2f,\"scd_rh\":%.1f,"
-         "\"sen_temp\":%.2f,\"sen_rh\":%.1f,"
-         "\"pm1\":%.1f,\"pm25\":%.1f,\"pm4\":%.1f,\"pm10\":%.1f,"
-         "\"voc\":%.1f,"
-         "\"fw\":\"%s\",\"build\":\"%s\"}",
-        f(co2_), f(t_scd_), f(rh_scd_), f(t_sen_), f(rh_sen_),
-        f(pm1_), f(pm25_), f(pm4_), f(pm10_), f(voc_),
-        ESPHOME_PROJECT_VERSION, APP_VERSION
-      );
-
-      req->send(200, "application/json", json);
-    });
-
-    // --- Update check --------------------------------------------------------
-    ws->on("/api/update/check", HTTP_POST, [this](Request *req) {
-      if (!this->check_auth_(req)) return;
-
-      if (update_) update_->check();  // safe; update_ may be null
-      req->send(200, "text/plain", "Update check requested");
-    });
-
-    // --- Update install ------------------------------------------------------
-    ws->on("/api/update/install", HTTP_POST, [this](Request *req) {
-      if (!this->check_auth_(req)) return;
-
-      if (update_) update_->install();
-      req->send(200, "text/plain", "Installing… device will reboot");
-    });
+    auto *ws = esphome::web_server_base::global_web_server_base;
+    if (ws == nullptr) {
+      ESP_LOGW(TAG, "web_server_base not initialized; UI will not be available");
+      return;
+    }
+    ws->add_handler(this);
+    ESP_LOGI(TAG, "Aeroq UI handler registered");
   }
 
-  void loop() override {}
+  void dump_config() override {
+    ESP_LOGCONFIG(TAG, "Aeroq custom web UI");
+  }
 
- private:
-  // --- Sensor pointers -------------------------------------------------------
-  esphome::sensor::Sensor *co2_{nullptr};
-  esphome::sensor::Sensor *pm25_{nullptr};
-  esphome::sensor::Sensor *t_scd_{nullptr};
-  esphome::sensor::Sensor *rh_scd_{nullptr};
-  esphome::sensor::Sensor *t_sen_{nullptr};
-  esphome::sensor::Sensor *rh_sen_{nullptr};
-  esphome::sensor::Sensor *pm1_{nullptr};
-  esphome::sensor::Sensor *pm4_{nullptr};
-  esphome::sensor::Sensor *pm10_{nullptr};
-  esphome::sensor::Sensor *voc_{nullptr};
-
-  esphome::update::UpdateComponent *update_{nullptr};
-
-  std::string user_;
-  std::string pass_;
-
-  // ============================================================================
-  //                         BASIC AUTH HANDLING
-  // ============================================================================
-  bool check_auth_(Request *req) {
-    if (user_.empty()) return true;
-
-    if (req->authenticate(user_.c_str(), pass_.c_str()))
-      return true;
-
-    req->requestAuthentication("Aeroq");
+  // AsyncWebHandler interface
+  bool canHandle(AsyncWebServerRequest *request) const override {
+    auto url = request->url();  // std::string in IDF backend
+    if (url == "/" || url == "/index.html") return true;
+    if (url.rfind("/api/", 0) == 0) return true;
     return false;
   }
 
-  // ============================================================================
-  //                               CUSTOM HTML PAGE
-  // ============================================================================
-  static const char INDEX_HTML[] PROGMEM;
+  void handleRequest(AsyncWebServerRequest *request) override {
+    auto url = request->url();
+    if (url == "/" || url == "/index.html") {
+      handle_root_(request);
+    } else if (url == "/api/state") {
+      handle_state_(request);
+    } else {
+      request->send(404, "text/plain", "Not found");
+    }
+  }
+
+  bool isRequestHandlerTrivial() const override { return false; }
+
+ private:
+  std::string user_;
+  std::string pass_;
+
+  Sensor *co2_{nullptr};
+  Sensor *pm25_{nullptr};
+  Sensor *t_scd_{nullptr};
+  Sensor *rh_scd_{nullptr};
+  Sensor *t_sen_{nullptr};
+  Sensor *rh_sen_{nullptr};
+  Sensor *pm1_{nullptr};
+  Sensor *pm4_{nullptr};
+  Sensor *pm10_{nullptr};
+  Sensor *voc_{nullptr};
+
+  static float safe_state_(Sensor *s) {
+    if (s == nullptr) return NAN;
+    return s->state;
+  }
+
+  void handle_root_(AsyncWebServerRequest *request) {
+    // NOTE: for now we ignore basic auth; credentials are stored but unused
+    request->send(200, "text/html", INDEX_HTML);
+  }
+
+  void handle_state_(AsyncWebServerRequest *request) {
+    char json[512];
+    snprintf(json, sizeof(json),
+             "{\"co2\":%.1f,"
+             "\"t_scd\":%.2f,\"rh_scd\":%.2f,"
+             "\"t_sen\":%.2f,\"rh_sen\":%.2f,"
+             "\"pm1\":%.1f,\"pm25\":%.1f,\"pm4\":%.1f,\"pm10\":%.1f,"
+             "\"voc\":%.1f}",
+             safe_state_(co2_), safe_state_(t_scd_), safe_state_(rh_scd_),
+             safe_state_(t_sen_), safe_state_(rh_sen_),
+             safe_state_(pm1_), safe_state_(pm25_), safe_state_(pm4_),
+             safe_state_(pm10_), safe_state_(voc_));
+
+    request->send(200, "application/json", json);
+  }
 };
-
-// ============================================================================
-//                              INLINE MINIFIED HTML
-// ============================================================================
-const char AeroqUI::INDEX_HTML[] PROGMEM = R"HTML(<!doctype html>
-<html lang="en"><head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Aeroq • Local</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-
-<style>
-:root{
- --bg:#050810;--panel:#0f1729;--accent:#46d6b7;--accent-soft:rgba(70,214,183,.12);
- --text:#f9fafb;--muted:#9ca3af;--border:rgba(148,163,184,.35)
-}
-*{box-sizing:border-box}
-body{
- margin:0;min-height:100vh;
- background:
-  radial-gradient(circle at 10% 0, rgba(70,214,183,.10),transparent 55%),
-  radial-gradient(circle at 90% 100%, rgba(56,189,248,.08),transparent 55%),
-  var(--bg);
- color:var(--text);
- font-family:Inter,system-ui,-apple-system,"Segoe UI";
- display:flex;align-items:center;justify-content:center;padding:24px
-}
-.shell{
- width:100%;max-width:980px;
- background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(15,23,42,.98));
- border:1px solid var(--border);border-radius:24px;
- padding:26px;box-shadow:0 22px 60px rgba(15,23,42,.9)
-}
-.header{
- display:flex;justify-content:space-between;align-items:center;gap:12px
-}
-.eyebrow{
- display:inline-flex;align-items:center;gap:8px;
- padding:4px 10px;border-radius:999px;
- background:rgba(15,23,42,.9);border:1px solid var(--border);
- font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)
-}
-.dot{
- width:8px;height:8px;border-radius:999px;
- background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)
-}
-.grid{
- margin-top:18px;
- display:grid;grid-template-columns:2fr 1fr;gap:18px
-}
-.card{
- background:rgba(15,23,42,.92);
- border:1px solid var(--border);
- border-radius:18px;
- padding:16px
-}
-.kv{
- display:grid;
- grid-template-columns:repeat(2,minmax(0,1fr));
- gap:12px
-}
-.tile{
- background:rgba(2,6,23,.9);
- border:1px solid rgba(51,65,85,.8);
- border-radius:14px;
- padding:12px
-}
-.label{
- font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.14em
-}
-.value{
- margin-top:4px;font-size:26px;font-weight:700
-}
-.unit{font-size:12px;color:#9ca3af;margin-left:6px}
-.row{display:flex;align-items:center;gap:10px;margin-top:8px}
-.btn{
- appearance:none;border:none;cursor:pointer;
- font-weight:600;padding:10px 14px;border-radius:999px;
- background:var(--accent);color:#020617
-}
-.btn:disabled{opacity:.6;cursor:not-allowed}
-.small{font-size:12px;color:var(--muted)}
-.footer{
- margin-top:16px;
- display:flex;justify-content:space-between;
- color:var(--muted);font-size:12px
-}
-.badge{
- padding:2px 8px;border-radius:999px;
- border:1px solid rgba(148,163,184,.4);
- font-size:11px
-}
-.status{
- font-size:12px;border-radius:999px;padding:4px 10px;
- border:1px solid rgba(148,163,184,.35);color:#e5e7eb
-}
-.ok{background:rgba(5,46,22,.7);border-color:rgba(22,163,74,.8);color:#bbf7d0}
-.warn{background:rgba(113,63,18,.6);border-color:rgba(245,158,11,.7);color:#fde68a}
-.bad{background:rgba(127,29,29,.6);border-color:rgba(239,68,68,.7);color:#fecaca}
-@media(max-width:768px){.grid{grid-template-columns:1fr}}
-</style>
-</head>
-
-<body>
-<div class="shell">
- <div class="header">
-   <div class="eyebrow"><span class="dot"></span><span>Aeroq · Local Web</span></div>
-   <div id="air" class="status ok">Healthy</div>
- </div>
-
- <div class="grid">
-   <div class="card">
-     <div class="kv">
-       <div class="tile"><div class="label">CO₂</div><div class="value"><span id="co2">—</span><span class="unit">ppm</span></div></div>
-       <div class="tile"><div class="label">PM2.5</div><div class="value"><span id="pm25">—</span><span class="unit">µg/m³</span></div></div>
-       <div class="tile"><div class="label">Temperature</div><div class="value"><span id="temp">—</span><span class="unit">°C</span></div></div>
-       <div class="tile"><div class="label">Humidity</div><div class="value"><span id="hum">—</span><span class="unit">%</span></div></div>
-     </div>
-   </div>
-
-   <div class="card">
-     <div class="label">Firmware</div>
-     <div class="row"><span id="fw" class="badge">—</span>
-       <button id="chk" class="btn">Check for Update</button>
-     </div>
-     <div class="row">
-       <button id="ins" class="btn" disabled>Install Update</button>
-       <span id="msg" class="small"></span>
-     </div>
-   </div>
- </div>
-
- <div class="footer">
-   <div>Visit: <strong>aeroq.local</strong></div>
-   <div>Build: <span id="build">—</span></div>
- </div>
-</div>
-
-<script>
-async function S(){
- try{
-   const r = await fetch('/api/state');
-   if(!r.ok) return;
-   const j = await r.json();
-
-   g('co2', j.co2?.toFixed?.(0) ?? '—');
-   g('pm25', j.pm25?.toFixed?.(0) ?? '—');
-   g('temp', (j.scd_temp ?? j.sen_temp)?.toFixed?.(1) ?? '—');
-   g('hum',  (j.scd_rh   ?? j.sen_rh)?.toFixed?.(0) ?? '—');
-
-   g('fw',    j.fw || '—');
-   g('build', j.build || '—');
-
-   let st='ok',txt='Healthy';
-   const co2=j.co2??0, pm=j.pm25??0;
-   if(co2>1200||pm>35){st='bad';txt='Poor'}
-   else if(co2>800||pm>12){st='warn';txt='Moderate'}
-   const el=document.getElementById('air');
-   el.className='status '+st; el.textContent=txt;
-
- }catch(e){}
-}
-function g(id,v){const el=document.getElementById(id); if(el) el.textContent=v;}
-
-document.getElementById('chk').addEventListener('click', async ()=>{
- g('msg','Checking...');
- await fetch('/api/update/check',{method:'POST'});
- g('msg','Update check requested');
- document.getElementById('ins').disabled=false;
-});
-
-document.getElementById('ins').addEventListener('click', async ()=>{
- document.getElementById('ins').disabled=true;
- g('msg','Installing... device will reboot');
- await fetch('/api/update/install',{method:'POST'});
-});
-
-S(); setInterval(S,2000);
-</script>
-
-</body></html>)HTML";
 
 }  // namespace aeroq
