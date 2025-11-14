@@ -1,13 +1,11 @@
 substitutions:
-  fw_version: "1.0.0"          # bump per release
-  ui_username: "admin"
-  ui_password: "password"         # change for production
+  fw_version: "1.0.0"
   device_name: "aeroq"
 
 esphome:
   name: ${device_name}
   name_add_mac_suffix: true
-  friendly_name: Aeroq Air Monitor
+  friendly_name: Aeroq AQMonitor
   project:
     name: "neyra.aeroq"
     version: ${fw_version}
@@ -64,9 +62,6 @@ web_server:
   version: 3
   local: true
   include_internal: true
-  auth:
-    username: ${ui_username}
-    password: ${ui_password}x
 
 external_components:
   - source:
@@ -77,8 +72,8 @@ external_components:
 # ─── Buses ─────────────────────────────────────────────────────────────────────
 
 i2c:
-  sda: 8                        # your hardware uses SDA=8, SCL=9
-  scl: 9
+  sda: 8                        # your hardware uses SDA=8, SCL=0
+  scl: 0 
   scan: true
 
 # ─── Sensors (IDs used by display + web UI) ───────────────────────────────────
