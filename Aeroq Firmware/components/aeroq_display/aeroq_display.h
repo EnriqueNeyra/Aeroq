@@ -10,6 +10,8 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 
+namespace aeroq {
+
 namespace aeroq_display {
 
 // ==== SPI + Display Pin Configuration (from legacy main.cpp) ====
@@ -29,12 +31,19 @@ static GxEPD2_BW<
 // --- State ---
 static bool s_inited = false;
 
-// --- Cached readings ---
+// Temperature unit flag: true = °F, false = °C (default °F)
+static bool g_temp_unit_f = true;
+
+// --- Cached readings (always stored in °C internally) ---
 static uint16_t g_co2 = 0;
 static float g_scdTemp = NAN, g_scdRH = NAN;
 static float g_senTemp = NAN, g_senRH = NAN;
 static float g_pm1 = NAN, g_pm25 = NAN, g_pm4 = NAN, g_pm10 = NAN;
 static float g_voc = NAN;
+
+// --- Public helpers to control unit from YAML / other components ---
+inline void set_temp_unit_f(bool use_fahrenheit) { g_temp_unit_f = use_fahrenheit; }
+inline bool get_temp_unit_f() { return g_temp_unit_f; }
 
 // --- Helpers ---
 inline void init_once() {
@@ -59,9 +68,14 @@ inline void init_once() {
 }
 
 inline void render_legacy_layout() {
-  // Average temp/RH same as legacy
-  const float avgTemp = (g_senTemp + g_scdTemp) / 2.0f;
-  const float avgRH   = (g_senRH   + g_scdRH)   / 2.0f;
+
+  // Chosen display unit
+  const bool useF = g_temp_unit_f;
+  const char unitChar = useF ? 'F' : 'C';
+
+  // Convert the SEN temp for display if needed
+  const float displayTemp =
+      useF ? (g_senTemp * 9.0f / 5.0f + 32.0f) : g_senTemp;
 
   // Partial window over full screen (same calls as legacy loop)
   display.setPartialWindow(0, 0, display.width(), display.height());
@@ -96,10 +110,10 @@ inline void render_legacy_layout() {
     // ---- Temperature & Humidity (left two boxes) ----
     display.setFont(&FreeSansBold18pt7b);
     display.setCursor(20, 40);
-    display.printf("%.1f C", avgTemp);
+    display.printf("%.1f %c", displayTemp, unitChar);
 
     display.setCursor(20, 90);
-    display.printf("%.1f%%", avgRH);
+    display.printf("%.1f%%", g_senRH);
 
     // ---- CO2 (middle box) ----
     display.setFont(&FreeSansBold12pt7b);
@@ -151,18 +165,20 @@ inline void render_legacy_layout() {
 }
 
 // --- Public API ---
+// IMPORTANT: all temperature values passed here are in °C.
+// We convert to °F for display if g_temp_unit_f == true.
 inline void tick_and_draw(uint16_t co2_ppm,
-                          float scd_temp, float scd_rh,
-                          float sen_temp, float sen_rh,
+                          float scd_temp_c, float scd_rh,
+                          float sen_temp_c, float sen_rh,
                           float pm1, float pm25, float pm4, float pm10,
                           float voc_idx) {
   init_once();
 
-  // cache latest values
+  // cache latest values (in °C)
   g_co2 = co2_ppm;
-  g_scdTemp = scd_temp;
+  g_scdTemp = scd_temp_c;
   g_scdRH   = scd_rh;
-  g_senTemp = sen_temp;
+  g_senTemp = sen_temp_c;
   g_senRH   = sen_rh;
   g_pm1  = pm1;
   g_pm25 = pm25;
@@ -170,8 +186,10 @@ inline void tick_and_draw(uint16_t co2_ppm,
   g_pm10 = pm10;
   g_voc  = voc_idx;
 
-  // draw exactly like legacy loop
+  // draw exactly like legacy loop, but with configurable unit
   render_legacy_layout();
 }
 
 }  // namespace aeroq_display
+
+}  // namespace aeroq

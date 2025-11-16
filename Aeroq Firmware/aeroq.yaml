@@ -1,9 +1,8 @@
 substitutions:
   fw_version: "1.0.0"
-  device_name: "aeroq"
 
 esphome:
-  name: ${device_name}
+  name: aeroq
   name_add_mac_suffix: true
   friendly_name: Aeroq AQMonitor
   project:
@@ -33,6 +32,7 @@ ota:
   - platform: esphome
   - platform: http_request
     id: ota_http
+  - platform: web_server  
 
 http_request:
   verify_ssl: false             # required on Arduino framework for HTTPS
@@ -122,8 +122,6 @@ sensor:
   
 # ── Aeroq custom UI component (external) ───────────────────────────────────────
 aeroq_ui:
-  username: ${ui_username}
-  password: ${ui_password}
   co2: co2
   pm25: pm2_5
   t_scd: t_scd
@@ -141,7 +139,7 @@ interval:
   - interval: 5s
     then:
       - lambda: |-
-          aeroq_display::tick_and_draw(
+          aeroq::aeroq_display::tick_and_draw(
             (uint16_t)(isnan(id(co2).state)   ? 0 : id(co2).state),
             isnan(id(t_scd).state)            ? 0 : id(t_scd).state,
             isnan(id(rh_scd).state)           ? 0 : id(rh_scd).state,

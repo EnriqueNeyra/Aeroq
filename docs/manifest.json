@@ -12,7 +12,7 @@
       ],
       "ota": {
         "path": "firmware/aeroq-ota-1.0.0.bin",
-        "md5": "D08FCA81614CBDD2A78B7B003BE263C7",
+        "md5": "9016D39DEA3742433489ADD7FA0C6D2C",
         "summary": "Initial release of Aeroq firmware"
       }
     }

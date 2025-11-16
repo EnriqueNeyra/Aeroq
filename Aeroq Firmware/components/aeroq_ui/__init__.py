@@ -8,8 +8,6 @@ AUTO_LOAD = ["web_server_base"]
 aeroq_ns = cg.esphome_ns.namespace("aeroq")
 AeroqUI = aeroq_ns.class_("AeroqUI", cg.Component)
 
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
 CONF_CO2 = "co2"
 CONF_PM25 = "pm25"
 CONF_T_SCD = "t_scd"
@@ -24,9 +22,6 @@ CONF_VOC = "voc"
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_ID): cv.declare_id(AeroqUI),
-
-        cv.Optional(CONF_USERNAME, default=""): cv.string,
-        cv.Optional(CONF_PASSWORD, default=""): cv.string,
 
         cv.Required(CONF_CO2): cv.use_id(sensor.Sensor),
         cv.Required(CONF_PM25): cv.use_id(sensor.Sensor),
@@ -61,8 +56,3 @@ async def to_code(config):
     ]:
         s = await cg.get_variable(config[key])
         cg.add(getattr(var, f"set_{key}")(s))
-
-    # Basic auth for the UI
-    username = config.get(CONF_USERNAME, "")
-    password = config.get(CONF_PASSWORD, "")
-    cg.add(var.set_basic_auth(username, password))
