@@ -41,9 +41,8 @@ update:
   - platform: http_request
     id: aeroq_fw_update
     name: "Aeroq Firmware"
-    source: "https://enriqueneyra.github.io/Aeroq/manifest.json"
+    source: "https://enriqueneyra.github.io/Aeroq/manifest-ota.json"
     update_interval: 24h
-    # auto_install: true        # uncomment if you want silent auto-updates
 
 wifi:
   ap:

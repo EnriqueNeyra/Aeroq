@@ -1,0 +1,20 @@
+{
+  "name": "Aeroq Air Quality Monitor",
+  "version": "1.0.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        {
+          "path": "firmware/aeroq-ota-1.0.0.bin",
+          "offset": 65536
+        }
+      ],
+      "ota": {
+        "path": "firmware/aeroq-ota-1.0.0.bin",
+        "md5": "9016D39DEA3742433489ADD7FA0C6D2C",
+        "summary": "Initial release of Aeroq firmware"
+      }
+    }
+  ]
+}

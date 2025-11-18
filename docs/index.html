@@ -305,21 +305,22 @@
                 </div>
               </div>
 
-              <!-- Manual .bin file -->
+              <!-- OTA update -->
               <div class="action-card">
                 <div class="action-header">
                   <div>
-                    <div class="action-title">Manual .bin (advanced)</div>
+                    <div class="action-title">Update firmware (OTA)</div>
                     <div class="action-desc">
-                      Flash a specific firmware binary from your computer.
+                      Install the latest Aeroq firmware while keeping your Wi-Fi and device settings.
+                      Use this if your Aeroq is already set up and you just want the newest version.
                     </div>
                   </div>
-                  <div class="badge">Manual</div>
+                  <div class="badge">Update</div>
                 </div>
 
                 <div class="file-row">
-                  <esp-web-install-button install-file>
-                    Choose .bin and flash
+                  <esp-web-install-button manifest="ota-manifest.json">
+                    Install latest firmware
                   </esp-web-install-button>
                 </div>
               </div>

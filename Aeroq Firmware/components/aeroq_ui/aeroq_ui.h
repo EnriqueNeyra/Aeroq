@@ -22,7 +22,7 @@ namespace aeroq_display {
 }
 
 // Full HTML/JS UI. Right-hand panel fetches the latest version
-// from your GitHub manifest.json and compares it to ESPHOME_PROJECT_VERSION.
+// from your GitHub ota-manifest.json and compares it to ESPHOME_PROJECT_VERSION.
 static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -513,7 +513,7 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 
     const unitButtons = document.querySelectorAll('.unit-btn');
 
-    const MANIFEST_URL = 'https://enriqueneyra.github.io/Aeroq/manifest.json';
+    const MANIFEST_URL = 'https://enriqueneyra.github.io/Aeroq/ota-manifest.json';
 
     let currentFwVersion = null;
     let latestFwVersion = null;

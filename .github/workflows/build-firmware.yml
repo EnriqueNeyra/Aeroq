@@ -1,112 +1,122 @@
-name: Build Firmware
+name: Build & Release Firmware
 
 on:
   push:
-    branches: [ none ]
-  workflow_dispatch: {}
+    branches: [ main ]
+    # Avoid infinite loops when this workflow commits manifest/firmware changes
+    paths-ignore:
+      - 'manifest.json'
+      - 'ota-manifest.json'
+      - 'firmware/**'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build-firmware:
+  build-and-bump:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build ESPHome firmware
-        id: esphome
-        uses: esphome/build-action@v7
-        with:
-          yaml-file: "Aeroq Firmware/aeroq.yaml"
-          # Optional: pin ESPHome version instead of "latest"
-          # version: "2025.10.4"
-          complete-manifest: false
-
-      - name: Copy firmware and update manifest.json
+      - name: Install jq
         run: |
-          set -e
-
-          # Outputs from esphome/build-action
-          OUT_NAME="${{ steps.esphome.outputs.name }}"
-          PROJECT_VERSION="${{ steps.esphome.outputs['project-version'] }}"
-
-          echo "Build output name: ${OUT_NAME}"
-          echo "Project version : ${PROJECT_VERSION}"
-
-          if [ -z "${PROJECT_VERSION}" ]; then
-            echo "ERROR: esphome.project.version is not set in aeroq.yaml"
-            exit 1
-          fi
-
-          OUT_DIR="${OUT_NAME}"
-
-          FACTORY_SRC="${OUT_DIR}/${OUT_NAME}.factory.bin"
-          OTA_SRC="${OUT_DIR}/${OUT_NAME}.ota.bin"
-
-          if [ ! -f "${FACTORY_SRC}" ] || [ ! -f "${OTA_SRC}" ]; then
-            echo "ERROR: Expected firmware files not found:"
-            ls -R "${OUT_DIR}" || true
-            exit 1
-          fi
-
-          mkdir -p docs/firmware
-
-          FACTORY_DST="docs/firmware/aeroq-factory-${PROJECT_VERSION}.bin"
-          OTA_DST="docs/firmware/aeroq-ota-${PROJECT_VERSION}.bin"
-
-          cp "${FACTORY_SRC}" "${FACTORY_DST}"
-          cp "${OTA_SRC}"      "${OTA_DST}"
-
-          echo "Copied firmware artifacts:"
-          echo "  ${FACTORY_DST}"
-          echo "  ${OTA_DST}"
-
-          # Ensure jq is available
-          sudo apt-get update -y
+          sudo apt-get update
           sudo apt-get install -y jq
 
-          # Compute MD5 for OTA file
-          OTA_MD5=$(md5sum "${OTA_DST}" | cut -d' ' -f1)
-          echo "OTA MD5: ${OTA_MD5}"
+      # 1) Read old version from manifest.json and compute new version (patch bump)
+      - name: Compute version
+        id: version
+        run: |
+          OLD_VERSION=$(jq -r '.version' manifest.json)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$OLD_VERSION"
+          NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "old_version=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
-          MANIFEST_IN="docs/manifest.json"
-          MANIFEST_TMP="docs/manifest.tmp.json"
+      # 2) Build firmware with ESPHome
+      - name: Build firmware with ESPHome
+        run: |
+          echo "Building firmware for version: ${{ steps.version.outputs.new_version }}"
 
-          if [ ! -f "${MANIFEST_IN}" ]; then
-            echo "ERROR: ${MANIFEST_IN} not found"
-            exit 1
-          fi
+          # Adjust this to your actual build command if needed:
+          docker run --rm \
+            -v "$PWD:/config" \
+            esphome/esphome:2025.10.4 \
+            compile aeroq.yaml
 
-          # Update manifest: version, paths, md5
-          jq --arg ver "$PROJECT_VERSION" \
-             --arg factory "firmware/aeroq-factory-${PROJECT_VERSION}.bin" \
-             --arg ota "firmware/aeroq-ota-${PROJECT_VERSION}.bin" \
-             --arg md5 "$OTA_MD5" \
-             '
-             .version = $ver
-             | .builds[0].parts[0].path = $factory
-             | .builds[0].ota.path = $ota
-             | .builds[0].ota.md5 = $md5
-             ' "${MANIFEST_IN}" > "${MANIFEST_TMP}"
+          # ESPHome default outputs (adjust if your paths differ):
+          #   .esphome/build/aeroq/.pioenvs/aeroq/firmware-factory.bin  (factory)
+          #   .esphome/build/aeroq/.pioenvs/aeroq/firmware.bin          (OTA)
 
-          mv "${MANIFEST_TMP}" "${MANIFEST_IN}"
+          mkdir -p firmware
 
-          echo "Updated ${MANIFEST_IN}:"
-          cat "${MANIFEST_IN}"
+          cp .esphome/build/aeroq/.pioenvs/aeroq/firmware.factory.bin \
+            "firmware/aeroq-factory-${{ steps.version.outputs.new_version }}.bin"
 
-          # Commit & push if changed
+          cp .esphome/build/aeroq/.pioenvs/aeroq/firmware.ota.bin \
+            "firmware/aeroq-ota-${{ steps.version.outputs.new_version }}.bin"
+
+      # 3) Compute MD5 of the OTA file
+      - name: Compute OTA MD5
+        id: md5
+        run: |
+          OTA_FILE="firmware/aeroq-ota-${{ steps.version.outputs.new_version }}.bin"
+          MD5=$(md5sum "$OTA_FILE" | awk '{print $1}')
+          echo "md5=$MD5" >> "$GITHUB_OUTPUT"
+
+      # 4) Update manifest.json and ota-manifest.json
+      - name: Update manifests
+        run: |
+          OLD="${{ steps.version.outputs.old_version }}"
+          NEW="${{ steps.version.outputs.new_version }}"
+          MD5="${{ steps.md5.outputs.md5 }}"
+
+          python - << 'PY'
+          import json, os, pathlib
+
+          old = os.environ["OLD"]
+          new = os.environ["NEW"]
+          md5 = os.environ["MD5"]
+
+          def update_manifest(path, is_ota):
+              p = pathlib.Path(path)
+              data = json.loads(p.read_text())
+
+          # bump version
+          data["version"] = new
+
+                # update any "parts[].path" that contains the old version string
+                for b in data.get("builds", []):
+                    for part in b.get("parts", []):
+                        if old in part.get("path", ""):
+                            part["path"] = part["path"].replace(old, new)
+
+                    if is_ota and "ota" in b:
+                        ota = b["ota"]
+                        if old in ota.get("path", ""):
+                            ota["path"] = ota["path"].replace(old, new)
+                        ota["md5"] = md5
+
+                p.write_text(json.dumps(data, indent=2))
+
+            update_manifest("manifest.json", False)
+            update_manifest("ota-manifest.json", True)
+            PY
+        env:
+          OLD: ${{ steps.version.outputs.old_version }}
+          NEW: ${{ steps.version.outputs.new_version }}
+          MD5: ${{ steps.md5.outputs.md5 }}
+
+      # 5) Commit & push changes back to main
+      - name: Commit and push
+        if: github.ref == 'refs/heads/main'
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/firmware docs/manifest.json
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "chore: update Aeroq firmware artifacts v${PROJECT_VERSION} [skip ci]"
-            git push
-          fi
+          git add manifest.json ota-manifest.json firmware/
+          git commit -m "chore: build firmware ${{ steps.version.outputs.new_version }}" || exit 0
+          git push
