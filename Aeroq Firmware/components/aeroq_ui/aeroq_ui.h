@@ -21,8 +21,9 @@ namespace aeroq_display {
   void set_temp_unit_f(bool use_fahrenheit);
 }
 
-// Full HTML/JS UI. Right-hand panel fetches the latest version
-// from your GitHub ota-manifest.json and compares it to ESPHOME_PROJECT_VERSION.
+// Full HTML/JS UI.
+// - Main tab: Environment (live metrics)
+// - Second tab: Firmware & Updates (OTA upload + version check against ota-manifest.json)
 static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,7 +77,7 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .title-block {
       display: flex;
@@ -136,10 +137,46 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       }
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.15fr);
-      gap: 16px;
+    /* Tabs */
+
+    .tabs {
+      margin-bottom: 6px;
+    }
+
+    .tab-buttons {
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.35);
+      margin-bottom: 10px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .tab-btn--active {
+      background: rgba(0,224,184,0.18);
+      color: var(--accent);
+    }
+
+    .tab-panels {
+      margin-top: 4px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel--active {
+      display: block;
     }
 
     .card {
@@ -408,12 +445,6 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       .frame {
         padding: 18px 16px 16px;
       }
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .firmware-card {
-        order: -1;
-      }
     }
   </style>
 </head>
@@ -434,58 +465,71 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="grid">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Environment</div>
-              <div class="card-subtitle">Live sensor snapshot</div>
-            </div>
-            <div class="unit-toggle">
-              <button class="unit-btn unit-btn--active" data-unit="F">°F</button>
-              <button class="unit-btn" data-unit="C">°C</button>
-            </div>
-          </div>
-          <div class="metrics-grid" id="metrics"></div>
-          <div class="chip-row">
-            <div class="chip" id="chip-last-updated">Last updated: —</div>
-          </div>
+      <div class="tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn tab-btn--active" data-tab="env">Environment</button>
+          <button class="tab-btn" data-tab="fw">Firmware &amp; updates</button>
         </div>
 
-        <div class="firmware-card">
-          <div class="firmware-inner">
-            <div class="fw-pill">
-              <div class="fw-pill-dot"></div>
-              <span>Firmware</span>
+        <div class="tab-panels">
+          <!-- Environment tab -->
+          <div class="tab-panel tab-panel--active" id="tab-env">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Environment</div>
+                  <div class="card-subtitle">Live sensor snapshot</div>
+                </div>
+                <div class="unit-toggle">
+                  <button class="unit-btn unit-btn--active" data-unit="F">°F</button>
+                  <button class="unit-btn" data-unit="C">°C</button>
+                </div>
+              </div>
+              <div class="metrics-grid" id="metrics"></div>
+              <div class="chip-row">
+                <div class="chip" id="chip-last-updated">Last updated: —</div>
+              </div>
             </div>
+          </div>
 
-            <div class="fw-title-row">
-              <h2 class="fw-title">Firmware & Updates</h2>
-              <div id="fw-badge" class="fw-badge fw-badge--unknown">Checking…</div>
-            </div>
+          <!-- Firmware tab -->
+          <div class="tab-panel" id="tab-fw">
+            <div class="firmware-card">
+              <div class="firmware-inner">
+                <div class="fw-pill">
+                  <div class="fw-pill-dot"></div>
+                  <span>Firmware</span>
+                </div>
 
-            <p class="fw-sub">
-              Manage firmware here when your Aeroq is on your home network.
-              Upload a new <code>.bin</code> file to update over Wi-Fi, or check
-              for updates from the Aeroq firmware channel.
-            </p>
+                <div class="fw-title-row">
+                  <h2 class="fw-title">Firmware & Updates</h2>
+                  <div id="fw-badge" class="fw-badge fw-badge--unknown">Checking…</div>
+                </div>
 
-            <div class="fw-meta">
-              <span>Current firmware: <strong id="fw-current">—</strong></span>
-              <span>Latest available: <strong id="fw-latest">—</strong></span>
-            </div>
+                <p class="fw-sub">
+                  Manage firmware here when your Aeroq is on your home network.
+                  Upload a new <code>.bin</code> file to update over Wi-Fi, or check
+                  for updates from the Aeroq firmware channel.
+                </p>
 
-            <form class="fw-form" id="ota-form" action="/update" method="POST" enctype="multipart/form-data">
-              <label class="fw-file">
-                <input type="file" name="firmware" id="fw-file-input" />
-              </label>
-              <button type="submit" class="fw-btn" id="fw-update-btn" disabled>
-                Upload &amp; install
-              </button>
-            </form>
+                <div class="fw-meta">
+                  <span>Current firmware: <strong id="fw-current">—</strong></span>
+                  <span>Latest available: <strong id="fw-latest">—</strong></span>
+                </div>
 
-            <div class="fw-status-text" id="fw-status-text">
-              Select a firmware file to enable the update button.
+                <form class="fw-form" id="ota-form" action="/update" method="POST" enctype="multipart/form-data">
+                  <label class="fw-file">
+                    <input type="file" name="firmware" id="fw-file-input" />
+                  </label>
+                  <button type="submit" class="fw-btn" id="fw-update-btn" disabled>
+                    Upload &amp; install
+                  </button>
+                </form>
+
+                <div class="fw-status-text" id="fw-status-text">
+                  Select a firmware file to enable the update button.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -498,6 +542,25 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
   </div>
 
   <script>
+    // --- Tabs ---
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanels = {
+      env: document.getElementById('tab-env'),
+      fw: document.getElementById('tab-fw')
+    };
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        // activate button
+        tabButtons.forEach(b => b.classList.toggle('tab-btn--active', b === btn));
+        // show panel
+        Object.entries(tabPanels).forEach(([key, panel]) => {
+          panel.classList.toggle('tab-panel--active', key === tab);
+        });
+      });
+    });
+
     // --- Live metrics + firmware status + temp unit ---
 
     const metricsEl = document.getElementById('metrics');
@@ -513,6 +576,7 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 
     const unitButtons = document.querySelectorAll('.unit-btn');
 
+    // Uses OTA manifest as the "latest firmware" channel
     const MANIFEST_URL = 'https://enriqueneyra.github.io/Aeroq/ota-manifest.json';
 
     let currentFwVersion = null;
@@ -550,23 +614,18 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       const unit = (data.temp_unit === 'C' || data.temp_unit === 'F') ? data.temp_unit : 'F';
       applyUnitToUI(unit);
 
-      const tScdRaw = data.t_scd;
       const tSenRaw = data.t_sen;
-
-      const tScd = unit === 'F' ? (tScdRaw * 9/5 + 32) : tScdRaw;
       const tSen = unit === 'F' ? (tSenRaw * 9/5 + 32) : tSenRaw;
 
       const items = [
-        { label: 'CO\u2082',        value: data.co2,   unit: 'ppm',           decimals: 1 },
-        { label: 'Temp (SCD41)',   value: tScd,       unit: '°' + unit,      decimals: 1 },
-        { label: 'RH (SCD41)',     value: data.rh_scd, unit: '%',            decimals: 1 },
-        { label: 'Temp (SEN54)',   value: tSen,       unit: '°' + unit,      decimals: 1 },
-        { label: 'RH (SEN54)',     value: data.rh_sen, unit: '%',            decimals: 1 },
-        { label: 'PM1.0',          value: data.pm1,   unit: 'µg/m³',         decimals: 1 },
-        { label: 'PM2.5',          value: data.pm25,  unit: 'µg/m³',         decimals: 1 },
-        { label: 'PM4.0',          value: data.pm4,   unit: 'µg/m³',         decimals: 1 },
-        { label: 'PM10',           value: data.pm10,  unit: 'µg/m³',         decimals: 1 },
-        { label: 'VOC Index',      value: data.voc,   unit: '',              decimals: 0 }
+        { label: 'CO\u2082',  value: data.co2,    unit: 'ppm',      decimals: 1 },
+        { label: 'Temp',      value: tSen,        unit: '°' + unit, decimals: 1 },
+        { label: 'RH',        value: data.rh_sen, unit: '%',        decimals: 1 },
+        { label: 'PM1.0',     value: data.pm1,    unit: 'µg/m³',    decimals: 1 },
+        { label: 'PM2.5',     value: data.pm25,   unit: 'µg/m³',    decimals: 1 },
+        { label: 'PM4.0',     value: data.pm4,    unit: 'µg/m³',    decimals: 1 },
+        { label: 'PM10',      value: data.pm10,   unit: 'µg/m³',    decimals: 1 },
+        { label: 'VOC Index', value: data.voc,    unit: '',         decimals: 0 }
       ];
 
       metricsEl.innerHTML = items.map(m => {

@@ -1,12 +1,12 @@
 {
   "name": "Aeroq Air Quality Monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "builds": [
     {
       "chipFamily": "ESP32-C3",
       "parts": [
         {
-          "path": "firmware/aeroq-factory-1.0.0.bin",
+          "path": "firmware/aeroq-factory-1.0.1.bin",
           "offset": 0
         }
       ]
