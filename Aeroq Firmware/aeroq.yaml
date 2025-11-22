@@ -32,7 +32,6 @@ ota:
   - platform: esphome
   - platform: http_request
     id: ota_http
-  - platform: web_server  
 
 http_request:
   verify_ssl: false             # required on Arduino framework for HTTPS
@@ -41,7 +40,7 @@ update:
   - platform: http_request
     id: aeroq_fw_update
     name: "Aeroq Firmware"
-    source: "https://enriqueneyra.github.io/Aeroq/manifest-ota.json"
+    source: "https://enriqueneyra.github.io/Aeroq/ota-manifest.json"
     update_interval: 24h
 
 wifi:
@@ -131,6 +130,7 @@ aeroq_ui:
   pm4: pm4_0
   pm10: pm10_0
   voc: voc_index
+  fw_update: aeroq_fw_update
 
 # ─── Main UI / E-paper render loop ────────────────────────────────────────────
 

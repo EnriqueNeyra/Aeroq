@@ -5,6 +5,7 @@
 #include "esphome/core/defines.h"
 #include "esphome/components/web_server_base/web_server_base.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/update/update_entity.h"
 
 #include <string>
 #include <cmath>
@@ -12,6 +13,7 @@
 namespace aeroq {
 
 using esphome::sensor::Sensor;
+using esphome::update::UpdateEntity;
 
 static const char *const TAG = "aeroq_ui";
 
@@ -23,7 +25,7 @@ namespace aeroq_display {
 
 // Full HTML/JS UI.
 // - Main tab: Environment (live metrics)
-// - Second tab: Firmware & Updates (OTA upload + version check against ota-manifest.json)
+// - Second tab: Firmware & Updates (one-click managed update via http_request)
 static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,21 +384,14 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       font-weight: 500;
     }
 
-    .fw-form {
-      margin-top: 8px;
+    .fw-actions {
+      margin-top: 10px;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
-    .fw-file {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .fw-file input[type="file"] {
-      font-size: 11px;
-      max-width: 170px;
-    }
+
     .fw-btn {
       border: none;
       outline: none;
@@ -410,12 +405,12 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       box-shadow: 0 10px 24px rgba(0,224,184,0.4);
       transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
     }
-    .fw-btn:hover {
+    .fw-btn:hover:enabled {
       transform: translateY(-1px);
       filter: brightness(1.05);
       box-shadow: 0 12px 30px rgba(0,224,184,0.55);
     }
-    .fw-btn:active {
+    .fw-btn:active:enabled {
       transform: translateY(0);
       box-shadow: 0 6px 18px rgba(0,224,184,0.35);
     }
@@ -508,8 +503,8 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
 
                 <p class="fw-sub">
                   Manage firmware here when your Aeroq is on your home network.
-                  Upload a new <code>.bin</code> file to update over Wi-Fi, or check
-                  for updates from the Aeroq firmware channel.
+                  When an update is available, click the button below and the
+                  device will download and install it over Wi-Fi.
                 </p>
 
                 <div class="fw-meta">
@@ -517,17 +512,14 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
                   <span>Latest available: <strong id="fw-latest">—</strong></span>
                 </div>
 
-                <form class="fw-form" id="ota-form" action="/update" method="POST" enctype="multipart/form-data">
-                  <label class="fw-file">
-                    <input type="file" name="firmware" id="fw-file-input" />
-                  </label>
-                  <button type="submit" class="fw-btn" id="fw-update-btn" disabled>
-                    Upload &amp; install
+                <div class="fw-actions">
+                  <button type="button" class="fw-btn" id="fw-update-btn" disabled>
+                    Update firmware
                   </button>
-                </form>
+                </div>
 
                 <div class="fw-status-text" id="fw-status-text">
-                  Select a firmware file to enable the update button.
+                  Checking for updates…
                 </div>
               </div>
             </div>
@@ -572,7 +564,6 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
     const fwBadgeEl = document.getElementById('fw-badge');
     const fwStatusTextEl = document.getElementById('fw-status-text');
     const fwUpdateBtn = document.getElementById('fw-update-btn');
-    const fwFileInput = document.getElementById('fw-file-input');
 
     const unitButtons = document.querySelectorAll('.unit-btn');
 
@@ -662,17 +653,15 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
     }
 
     function renderFirmwareStatus() {
-      if (!currentFwVersion) {
-        fwCurrentEl.textContent = '—';
-      } else {
-        fwCurrentEl.textContent = currentFwVersion;
-      }
+      fwCurrentEl.textContent = currentFwVersion || '—';
 
       if (manifestError) {
         fwLatestEl.textContent = 'Unavailable';
         fwBadgeEl.textContent = 'Status unknown';
         fwBadgeEl.className = 'fw-badge fw-badge--unknown';
         fwStatusTextEl.textContent = 'Could not reach the Aeroq update channel from this browser.';
+        fwUpdateBtn.disabled = true;
+        fwUpdateBtn.textContent = 'Update firmware';
         return;
       }
 
@@ -681,6 +670,8 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
         fwBadgeEl.textContent = 'Checking…';
         fwBadgeEl.className = 'fw-badge fw-badge--unknown';
         fwStatusTextEl.textContent = 'Checking for the latest firmware version…';
+        fwUpdateBtn.disabled = true;
+        fwUpdateBtn.textContent = 'Update firmware';
         return;
       }
 
@@ -690,11 +681,15 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       if (cmp > 0) {
         fwBadgeEl.textContent = 'Update available';
         fwBadgeEl.className = 'fw-badge fw-badge--warn';
-        fwStatusTextEl.textContent = 'A newer firmware is available. Upload the new .bin file to update over Wi-Fi.';
+        fwStatusTextEl.textContent = 'A newer firmware is available. Click the button to install it over Wi-Fi.';
+        fwUpdateBtn.disabled = false;
+        fwUpdateBtn.textContent = 'Update to ' + latestFwVersion;
       } else {
         fwBadgeEl.textContent = 'Up to date';
         fwBadgeEl.className = 'fw-badge fw-badge--ok';
         fwStatusTextEl.textContent = 'This device is running the latest known firmware.';
+        fwUpdateBtn.disabled = true;
+        fwUpdateBtn.textContent = 'Up to date';
       }
     }
 
@@ -703,13 +698,22 @@ static const char INDEX_HTML[] = R"HTML(<!DOCTYPE html>
       renderFirmwareStatus();
     }
 
-    fwFileInput.addEventListener('change', () => {
-      const hasFile = fwFileInput.files && fwFileInput.files.length > 0;
-      fwUpdateBtn.disabled = !hasFile;
-      if (hasFile) {
-        fwStatusTextEl.textContent = 'Click "Upload & install" to start the OTA update over Wi-Fi.';
-      } else {
-        renderFirmwareStatus();
+    fwUpdateBtn.addEventListener('click', async () => {
+      if (fwUpdateBtn.disabled) return;
+      fwUpdateBtn.disabled = true;
+      fwStatusTextEl.textContent = 'Starting firmware update… device will reboot when done.';
+
+      try {
+        const res = await fetch('/api/perform_update', { method: 'POST' });
+        if (!res.ok) throw new Error('bad status');
+        // If the device reboots quickly, this page will drop connection anyway.
+        fwStatusTextEl.textContent = 'Update started. This page may become unreachable while the device reboots.';
+      } catch (e) {
+        fwStatusTextEl.textContent = 'Failed to start update. Check connection and try again.';
+        // Re-enable after a short delay
+        setTimeout(() => {
+          renderFirmwareStatus();
+        }, 3000);
       }
     });
 
@@ -773,6 +777,9 @@ class AeroqUI : public esphome::Component, public AsyncWebHandler {
   void set_pm10(Sensor *s)   { pm10_ = s; }
   void set_voc(Sensor *s)    { voc_ = s; }
 
+  // NEW: wire in the http_request update entity
+  void set_fw_update(UpdateEntity  *u) { fw_update_ = u; }
+
   void setup() override {
     auto *ws = esphome::web_server_base::global_web_server_base;
     if (ws == nullptr) {
@@ -790,6 +797,7 @@ class AeroqUI : public esphome::Component, public AsyncWebHandler {
 #else
     ESP_LOGCONFIG(TAG, "  Firmware version: unknown");
 #endif
+    ESP_LOGCONFIG(TAG, "  http_request update wired: %s", fw_update_ != nullptr ? "YES" : "NO");
   }
 
   // AsyncWebHandler interface
@@ -808,6 +816,8 @@ class AeroqUI : public esphome::Component, public AsyncWebHandler {
       handle_state_(request);
     } else if (url == "/api/set_temp_unit") {
       handle_set_temp_unit_(request);
+    } else if (url == "/api/perform_update") {
+      handle_perform_update_(request);
     } else {
       request->send(404, "text/plain", "Not found");
     }
@@ -826,6 +836,8 @@ class AeroqUI : public esphome::Component, public AsyncWebHandler {
   Sensor *pm4_{nullptr};
   Sensor *pm10_{nullptr};
   Sensor *voc_{nullptr};
+
+  UpdateEntity *fw_update_{nullptr};
 
   static float safe_state_(Sensor *s) {
     if (s == nullptr) return NAN;
@@ -875,6 +887,21 @@ class AeroqUI : public esphome::Component, public AsyncWebHandler {
     } else {
       request->send(400, "application/json", "{\"ok\":false,\"error\":\"missing u\"}");
     }
+  }
+
+  // NEW: trigger http_request-based managed update
+  void handle_perform_update_(AsyncWebServerRequest *request) {
+    if (fw_update_ == nullptr) {
+      ESP_LOGW(TAG, "Update requested but http_request update component is not wired");
+      request->send(500, "application/json",
+                    "{\"ok\":false,\"error\":\"update_not_configured\"}");
+      return;
+    }
+
+    ESP_LOGI(TAG, "Starting http_request firmware update via web UI");
+    // false = do not force if it thinks there is no update; UI already checks versions
+    fw_update_->perform(false);
+    request->send(200, "application/json", "{\"ok\":true}");
   }
 };
 
