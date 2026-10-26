@@ -1,5 +1,12 @@
 # Aeroq
 
+> [!IMPORTANT]
+> **Aeroq is no longer maintained. Its successor is [Aether](https://github.com/EnriqueNeyra/aether).**
+>
+> Aether is the new version of this project. It uses a Sensirion SEN66 sensor (adding NOx), runs ESPHome firmware with Home Assistant integration, and adds a local web dashboard, OTA updates, and a browser-based USB flasher. For a new build, use Aether.
+>
+> This repository is kept as a reference for existing Aeroq v3 builds and will not receive further updates.
+
 <img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/a664637c-8e82-404b-834a-4a762beba134" />
 
 ### A comprehensive indoor air quality monitor, capturing Temperature, Relative Humidity, CO2 (ppm), VOC (Index), and PM 1.0, 2.5, 4.0, 10 (ug/m3)
@@ -10,12 +17,13 @@
 - [Firmware Setup](#firmware-setup)
 - [Assembly](#assembly)
 - [Using Aeroq](#using-aeroq)
+- [Troubleshooting](#troubleshooting)
 
 ---
 ## Project Overview
 
 ### Hardware
-Schematic and PCB designed using KiCad. Schematic, PCB design, and manufacturing files can be found under [Aeroq Hardware/](./Aeroq%20Hardware/v3)
+Schematic and PCB designed using KiCad. Schematic, PCB design, and manufacturing files can be found under [Aeroq Hardware/](./Aeroq%20Hardware/v3). The manufacturing package (Gerbers, drill files, and the PCBWay BOM, positions, and netlist) is `Aeroq Hardware/v3/Aeroq Hardware v3.kicad_pcb.zip`.
 
 <img width="500" height="1011" alt="image" src="https://github.com/user-attachments/assets/9c807429-ff14-4dc1-8fe5-cacd1b4f265d" />
 
@@ -37,7 +45,9 @@ Source code for ESP32 firmware, developed with PlatformIO. Can be found under [A
 | SEN54 (VOC/PM) Sensor | [Sensirion](https://sensirion.com/products/catalog/SEN54) |
 | Enclosure 3D Print Files | [Printables](https://www.printables.com/model/1394330-indoor-air-quality-monitor) |
 | 3.7" 240x416 E-Paper Display | [GoodDisplay](https://buyepaper.com/products/37-inch-416x240-e-paper-black-and-white-spi-fast-refresh-electronic-eink-display-screen-esl-gdey037t03) |
-| JST GH 6 Pin Connector | [Adafruit](https://www.adafruit.com/product/5754#description) |
+| JST GH 6 Pin Cable | [Adafruit](https://www.adafruit.com/product/5754#description) |
+
+The SEN54 cable must connect pin 1 on the PCB to pin 1 on the SEN54. The board's connector uses the same pin order as the sensor (1: 5V, 2: GND, 3: SDA, 4: SCL, 5: GND, 6: NC). A cable that mirrors the pins leaves the sensor unpowered; see [Troubleshooting](#troubleshooting).
 
 ---
 
@@ -57,15 +67,16 @@ This project uses [PlatformIO](https://platformio.org/), a plugin for VSCode tha
    ```bash
    git clone https://github.com/EnriqueNeyra/Aeroq.git
    cd "Aeroq/Aeroq Firmware"
+   ```
 
 4. **Open Project in PlatformIO**  
    - In VSCode, go to *File > Open Folder*  
    - Select the `Aeroq Firmware/` directory.  
 
-5. **Connect the ESP32-S3**  
+5. **Connect the ESP32-C3**  
    - Use a USB-C cable to connect the board to your computer.  
    - Ensure the correct COM port/device is available  
-   - The *monitor_port* configuration value may need to be changed in the platformio.ini file  
+   - PlatformIO detects the port automatically. If several boards are connected, set `upload_port` / `monitor_port` in platformio.ini  
 
 6. **Build and Upload**  
    In PlatformIO, use the toolbar at the bottom:  
@@ -103,6 +114,19 @@ Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), an
 **For optimal measurement accuracy, keep it away from heat sources (electronics, lights, etc) and in an area with minimal clutter.**
 
 <img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/763cf77f-df35-4627-929d-93a298740765" />
+
+---
+
+## Troubleshooting
+
+**Display shows "--" and "SEN54 not responding", or the serial monitor shows `[SEN54] readMeasuredValues() error = 270`**  
+Error 270 means the SEN54 isn't answering on I2C. With the power unplugged, check that the cable connects PCB pin 1 to SEN54 pin 1. Then power the board and measure between SEN54 pin 1 and pin 2: the SEN54 needs at least 4.5V.
+
+**Readings drop out or the board resets on some power supplies**  
+The SEN54 runs from USB 5V after a protection diode, so it only gets about 4.5–4.7V. Use a 5V 1A adapter or a computer port directly, not a USB hub or a long, thin cable. Aether's hardware removes this limitation.
+
+**Upload fails or the board doesn't show up as a serial port**  
+Unplug the display and the SEN54, and connect the board directly to your computer rather than through a hub. Hold BOOT, press and release RESET, then release BOOT to enter download mode, and upload again. Reconnect the display and sensor afterwards.
 
 
 ## License
