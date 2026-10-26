@@ -1,0 +1,10 @@
+.DS_Store
+
+# KiCad backups, caches, and per-user settings
+*-backups/
+*.kicad_sch-bak
+*.kicad_pcb-bak
+_autosave-*
+*.lck
+fp-info-cache
+*.kicad_prl
