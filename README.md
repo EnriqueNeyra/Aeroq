@@ -131,7 +131,7 @@ Unplug the display and the SEN54, and connect the board directly to your compute
 
 ## License
 
-This project (hardware, design files, and firmware) is licensed under the 
-[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+- **Firmware** (everything in [Aeroq Firmware/](./Aeroq%20Firmware)) is licensed under the [GNU General Public License v3.0](./Aeroq%20Firmware/LICENSE). It links the GPL-3.0 GxEPD2 display library.
+- **Hardware and enclosure** (schematic, PCB, CAD, and other design files) are licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/). See [LICENSE](./LICENSE).
 
 [![License: CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
