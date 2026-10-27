@@ -7,7 +7,7 @@
 >
 > This repository is kept as a reference for existing Aeroq v3 builds and will not receive further updates.
 
-<img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/a664637c-8e82-404b-834a-4a762beba134" />
+<img width="100%" alt="Aeroq air quality monitor" src="https://github.com/user-attachments/assets/a664637c-8e82-404b-834a-4a762beba134" />
 
 ### A comprehensive indoor air quality monitor, capturing Temperature, Relative Humidity, CO2 (ppm), VOC (Index), and PM 1.0, 2.5, 4.0, 10 (ug/m3)
 
@@ -25,7 +25,7 @@
 ### Hardware
 Schematic and PCB designed using KiCad. Schematic, PCB design, and manufacturing files can be found under [Aeroq Hardware/](./Aeroq%20Hardware/v3). The manufacturing package (Gerbers, drill files, and the PCBWay BOM, positions, and netlist) is `Aeroq Hardware/v3/Aeroq Hardware v3.kicad_pcb.zip`.
 
-<img width="500" height="1011" alt="image" src="https://github.com/user-attachments/assets/9c807429-ff14-4dc1-8fe5-cacd1b4f265d" />
+<img width="500" alt="Aeroq v3 PCB" src="https://github.com/user-attachments/assets/9c807429-ff14-4dc1-8fe5-cacd1b4f265d" />
 
 ### Enclosure
 Two 3D printed components are required for the assembly. Model files can be found under [Aeroq Enclosure/](./Aeroq%20Enclosure)
@@ -113,7 +113,7 @@ This project uses [PlatformIO](https://platformio.org/), a plugin for VSCode tha
 Simply plug the device in using any USB-C cable/power supply (minimum 5V 1A), and wait for the initialization to complete.  
 **For optimal measurement accuracy, keep it away from heat sources (electronics, lights, etc) and in an area with minimal clutter.**
 
-<img width="2268" height="1181" alt="image" src="https://github.com/user-attachments/assets/763cf77f-df35-4627-929d-93a298740765" />
+<img width="100%" alt="Aeroq air quality monitor" src="https://github.com/user-attachments/assets/763cf77f-df35-4627-929d-93a298740765" />
 
 ---
 
